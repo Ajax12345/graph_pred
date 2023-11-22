@@ -39,6 +39,18 @@ if __name__ == '__main__':
             (g_c.GCNConv,),
             (g_c.ChebConv,),
             (g_c.SAGEConv,),
+            (g_c.GraphConv,),
+            (g_c.GatedGraphConv,),
+            (g_c.GATConv,),
+            (g_c.CuGraphGATConv,),
+            (g_c.GATv2Conv,),
+            (g_c.TransformerConv,),
+            (g_c.TAGConv,),
+            (g_c.ARMAConv,),
+            (g_c.SGConv,),
+            (g_c.APPNP,),
+            (g_c.MFConv,),
+
         ]
     }
     for [a] in d['convolutions']:

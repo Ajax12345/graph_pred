@@ -118,4 +118,205 @@ class SAGEConv(Convolution):
                         'out_channels':self.genotype.network_state['out_channels'], 
                         'aggr':self.aggr}}
 
+class GraphConv(SAGEConv):
+    def init(self) -> 'GraphConv':
+        self.torch_obj_instance = tg_nn.GraphConv(
+                self.genotype.network_state['in_channels'], 
+                self.genotype.network_state['out_channels'],
+                aggr = self.aggr)
+
+        return self
+
+
+class GatedGraphConv(SAGEConv):
+    def __init__(self, genotype:'GraphGenotype') -> None:
+        super().__init__(genotype)
+        self.num_layers = random.randint(2, 10)
+
+    def init(self) -> 'GatedGraphConv':
+        self.torch_obj_instance = tg_nn.GatedGraphConv(
+                self.genotype.network_state['out_channels'],
+                self.num_layers,
+                aggr = self.aggr)
+
+        return self
+
+    def to_dict(self) -> dict:
+        return {'type':'convolution', 
+                'name':self.__class__.__name__, 
+                'params':{'in_channels':self.genotype.network_state['in_channels'], 
+                        'out_channels':self.genotype.network_state['out_channels'], 
+                        'aggr':self.aggr, 'num_layers':self.num_layers}}
+
+
+class GATConv(GCNConv):
+    def init(self) -> 'GATConv':
+        self.torch_obj_instance = tg_nn.GATConv(
+                self.genotype.network_state['in_channels'], 
+                self.genotype.network_state['out_channels'])
+
+        return self
+
+
+class CuGraphGATConv(GCNConv):
+    def init(self) -> 'CuGraphGATConv':
+        self.torch_obj_instance = tg_nn.CuGraphGATConv(
+                self.genotype.network_state['in_channels'], 
+                self.genotype.network_state['out_channels'])
+
+        return self
     
+
+class GATv2Conv(GCNConv):
+    def init(self) -> 'GATv2Conv':
+        self.torch_obj_instance = tg_nn.GATv2Conv(
+                self.genotype.network_state['in_channels'], 
+                self.genotype.network_state['out_channels'])
+
+        return self
+
+class TransformerConv(GCNConv):
+    def init(self) -> 'TransformerConv':
+        self.torch_obj_instance = tg_nn.TransformerConv(
+                self.genotype.network_state['in_channels'], 
+                self.genotype.network_state['out_channels'])
+
+        return self
+
+
+class TAGConv(Convolution):
+    def __init__(self, genotype:'GraphGenotype') -> None:
+        self.genotype = genotype
+        self.torch_obj_instance = None
+        self.K = random.randint(2, 7)
+        
+    def update_random_params(self) -> None:
+        self.K = random.randint(2, 7)
+        self.init()
+
+    def init(self) -> 'TAGConv':
+        self.torch_obj_instance = tg_nn.TAGConv(
+                self.genotype.network_state['in_channels'], 
+                self.genotype.network_state['out_channels'],
+                K = self.K)
+
+        return self
+
+    def execute(self) -> None:
+        self.genotype.network_state['x'] = self.torch_obj_instance(
+            self.genotype.network_state['x'], 
+            self.genotype.network_state['edge_index'])
+
+    
+    def to_dict(self) -> dict:
+        return {'type':'convolution', 
+                'name':self.__class__.__name__, 
+                'params':{'in_channels':self.genotype.network_state['in_channels'], 
+                        'out_channels':self.genotype.network_state['out_channels'], 
+                        'K':self.K}}
+
+class ARMAConv(Convolution):
+    def __init__(self, genotype:'GraphGenotype') -> None:
+        self.genotype = genotype
+        self.torch_obj_instance = None
+        self.num_stacks = random.randint(2, 5)
+        self.num_layers = random.randint(2, 5)
+        self.dropout = random.randint(0, 5)/10
+        
+    def update_random_params(self) -> None:
+        self.num_stacks = random.randint(2, 5)
+        self.num_layers = random.randint(2, 5)
+        self.dropout = random.randint(0, 5)/10
+        self.init()
+
+    def init(self) -> 'ARMAConv':
+        self.torch_obj_instance = tg_nn.ARMAConv(
+                self.genotype.network_state['in_channels'], 
+                self.genotype.network_state['out_channels'],
+                num_stacks = self.num_stacks,
+                num_layers = self.num_layers,
+                dropout = self.dropout)
+
+        return self
+
+    def execute(self) -> None:
+        self.genotype.network_state['x'] = self.torch_obj_instance(
+            self.genotype.network_state['x'], 
+            self.genotype.network_state['edge_index'])
+
+    
+    def to_dict(self) -> dict:
+        return {'type':'convolution', 
+                'name':self.__class__.__name__, 
+                'params':{'in_channels':self.genotype.network_state['in_channels'], 
+                        'out_channels':self.genotype.network_state['out_channels'], 
+                        'num_stacks':self.num_stacks,
+                        'num_layers':self.num_layers,
+                        'dropout':self.dropout}}
+
+
+class SGConv(Convolution):
+    def __init__(self, genotype:'GraphGenotype') -> None:
+        self.genotype = genotype
+        self.torch_obj_instance = None
+        self.K = random.randint(1, 5)
+        
+    def update_random_params(self) -> None:
+        self.K = random.randint(1, 5)
+        self.init()
+
+        
+    def init(self) -> 'ARMAConv':
+        self.torch_obj_instance = tg_nn.SGConv(
+                self.genotype.network_state['in_channels'], 
+                self.genotype.network_state['out_channels'],
+                K = self.K)
+
+        return self
+
+
+    def to_dict(self) -> dict:
+        return {'type':'convolution', 
+                'name':self.__class__.__name__, 
+                'params':{'in_channels':self.genotype.network_state['in_channels'], 
+                        'out_channels':self.genotype.network_state['out_channels'], 
+                        'K':self.K}}
+
+
+class APPNP(Convolution):
+    def __init__(self, genotype:'GraphGenotype') -> None:
+        self.genotype = genotype
+        self.torch_obj_instance = None
+        self.K = random.randint(1, 5)
+        self.alpha = random.randint(1,100)/100
+        self.dropout = random.randint(0, 5)/10
+
+    def update_random_params(self) -> None:
+        self.K = random.randint(1, 5)
+        self.alpha = random.randint(1,100)/100
+        self.dropout = random.randint(0, 5)/10
+        self.init()
+
+    def init(self) -> 'APPNP':
+        self.torch_obj_instance = tg_nn.APPNP(
+                self.K, 
+                self.alpha,
+                dropout = self.dropout)
+
+        return self
+
+    def to_dict(self) -> dict:
+        return {'type':'convolution', 
+                'name':self.__class__.__name__, 
+                'params':{'in_channels':self.genotype.network_state['in_channels'], 
+                        'out_channels':self.genotype.network_state['out_channels'], 
+                        'K':self.K, 'alpha':self.alpha, 'dropout':self.dropout}}
+    
+
+class MFConv(GCNConv):
+    def init(self) -> 'MFConv':
+        self.torch_obj_instance = tg_nn.MFConv(
+                self.genotype.network_state['in_channels'], 
+                self.genotype.network_state['out_channels'])
+
+        return self
