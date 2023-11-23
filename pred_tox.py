@@ -6,7 +6,7 @@ from torch_geometric.data import DataLoader
 from torch_geometric.datasets import MoleculeNet
 import pickle
 from torch_geometric.data import DataLoader
-from torch_geometric.nn import GCNConv, GatedGraphConv
+from torch_geometric.nn import GCNConv, GatedGraphConv, BatchNorm
 from torch_geometric.nn import global_mean_pool as gap
 import torch.nn.functional as F
 from torch.nn import Linear
@@ -57,8 +57,9 @@ class GCN(torch.nn.Module):
         self.emb = AtomEncoder(hidden_channels=32)
         self.conv1 = GCNConv(hidden_channels,hidden_channels)
         self.conv2 = GCNConv(hidden_channels, hidden_channels)
-        #self.conv3 = GCNConv(hidden_channels, hidden_channels)
-        self.conv3 = GatedGraphConv(hidden_channels, 5)
+        self.bn1 = BatchNorm(hidden_channels)
+        self.conv3 = GCNConv(hidden_channels, hidden_channels)
+        #self.conv3 = GatedGraphConv(hidden_channels, 5)
         self.lin = Linear(hidden_channels, num_classes)
 
     def forward(self, batch):
@@ -74,6 +75,7 @@ class GCN(torch.nn.Module):
         x = F.relu(x)
         x = self.conv2(x, edge_index)
         x = F.relu(x)
+        x = self.bn1(x)
         x = self.conv3(x, edge_index)
 
         # 2. Readout layer

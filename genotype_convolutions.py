@@ -12,7 +12,7 @@ class Convolution:
         self.torch_obj_instance = None
         
     def update_random_params(self) -> None:
-        pass
+        return False
 
     def __repr__(self) -> str:
         d = self.to_dict()
@@ -47,7 +47,7 @@ class ChebConv(Convolution):
         
     def update_random_params(self) -> None:
         self.K = random.randint(2, 20)
-        self.init()
+        return self.init()
 
     def init(self) -> 'ChebConv':
         self.torch_obj_instance = tg_nn.ChebConv(
@@ -97,8 +97,7 @@ class SAGEConv(Convolution):
 
     def update_random_params(self) -> None:
         self.aggr = self.random_aggregation()
-        self.init()
-
+        return self.init()
 
     def init(self) -> 'SAGEConv':
         self.torch_obj_instance = tg_nn.SAGEConv(
@@ -195,7 +194,7 @@ class TAGConv(Convolution):
         
     def update_random_params(self) -> None:
         self.K = random.randint(2, 7)
-        self.init()
+        return self.init()
 
     def init(self) -> 'TAGConv':
         self.torch_obj_instance = tg_nn.TAGConv(
@@ -230,7 +229,7 @@ class ARMAConv(Convolution):
         self.num_stacks = random.randint(2, 5)
         self.num_layers = random.randint(2, 5)
         self.dropout = random.randint(0, 5)/10
-        self.init()
+        return self.init()
 
     def init(self) -> 'ARMAConv':
         self.torch_obj_instance = tg_nn.ARMAConv(
@@ -266,8 +265,7 @@ class SGConv(Convolution):
         
     def update_random_params(self) -> None:
         self.K = random.randint(1, 5)
-        self.init()
-
+        return self.init()
         
     def init(self) -> 'ARMAConv':
         self.torch_obj_instance = tg_nn.SGConv(
@@ -298,7 +296,7 @@ class APPNP(Convolution):
         self.K = random.randint(1, 5)
         self.alpha = random.randint(1,100)/100
         self.dropout = random.randint(0, 5)/10
-        self.init()
+        return self.init()
 
     def init(self) -> 'APPNP':
         self.torch_obj_instance = tg_nn.APPNP(

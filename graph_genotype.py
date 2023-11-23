@@ -3,6 +3,7 @@ import torch, random
 import torch_geometric
 import numpy as np, torch_geometric.nn as tg_nn
 import genotype_convolutions as g_c
+import genotype_normalizations as g_n
 
 '''
 1. convolution layers:
@@ -50,10 +51,19 @@ if __name__ == '__main__':
             (g_c.SGConv,),
             (g_c.APPNP,),
             (g_c.MFConv,),
-
+        ],
+        'normalizations':[
+            (g_n.BatchNorm,),
+            (g_n.InstanceNorm,),
+            (g_n.LayerNorm,),
+            (g_n.GraphNorm,),
+            (g_n.GraphSizeNorm,),
+            (g_n.PairNorm,),
+            (g_n.MeanSubtractionNorm,),
+            (g_n.DiffGroupNorm,),
         ]
     }
-    for [a] in d['convolutions']:
+    for [a] in d['normalizations']:
         m = a(gn)
         print(m)
 
