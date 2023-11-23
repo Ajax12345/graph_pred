@@ -4,6 +4,7 @@ import torch_geometric
 import numpy as np, torch_geometric.nn as tg_nn
 import genotype_convolutions as g_c
 import genotype_normalizations as g_n
+import genotype_pooling as g_p
 
 '''
 1. convolution layers:
@@ -24,8 +25,6 @@ import genotype_normalizations as g_n
 dependencies:
     -  pynndescent
 '''
-
-
 
 
 class GraphGenotype:
@@ -61,6 +60,11 @@ if __name__ == '__main__':
             (g_n.PairNorm,),
             (g_n.MeanSubtractionNorm,),
             (g_n.DiffGroupNorm,),
+        ],
+        'pooling':[
+            (g_p.global_add_pool,),
+            (g_p.global_mean_pool,),
+            (g_p.global_max_pool,),
         ]
     }
     for [a] in d['normalizations']:
