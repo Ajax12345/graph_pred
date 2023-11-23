@@ -41,7 +41,7 @@ class global_max_pool(global_add_pool):
         self.torch_obj_instance = tg_nn.global_max_pool
         return self
 
-class TopKPooling(Normalization):
+class TopKPooling(Pooling):
     '''
     Warning: resizing required!
     '''

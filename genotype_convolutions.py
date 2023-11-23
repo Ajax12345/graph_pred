@@ -275,6 +275,11 @@ class SGConv(Convolution):
 
         return self
 
+    def execute(self) -> None:
+        self.genotype.network_state['x'] = self.torch_obj_instance(
+            self.genotype.network_state['x'], 
+            self.genotype.network_state['edge_index'])
+
 
     def to_dict(self) -> dict:
         return {'type':'convolution', 
@@ -306,6 +311,11 @@ class APPNP(Convolution):
 
         return self
 
+    def execute(self) -> None:
+        self.genotype.network_state['x'] = self.torch_obj_instance(
+            self.genotype.network_state['x'], 
+            self.genotype.network_state['edge_index'])
+
     def to_dict(self) -> dict:
         return {'type':'convolution', 
                 'name':self.__class__.__name__, 
@@ -321,3 +331,8 @@ class MFConv(GCNConv):
                 self.genotype.network_state['out_channels'])
 
         return self
+
+    def execute(self) -> None:
+        self.genotype.network_state['x'] = self.torch_obj_instance(
+            self.genotype.network_state['x'], 
+            self.genotype.network_state['edge_index'])

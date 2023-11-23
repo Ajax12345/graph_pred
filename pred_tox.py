@@ -80,11 +80,7 @@ class GCN(torch.nn.Module):
         x = self.conv3(x, edge_index)
 
         # 2. Readout layer
-        #x = gap(x, batch_size)  # [batch_size, hidden_channels]
-        old_s = x.shape
-        x, edge_index, _, batch_size, _, _ = self.pooling(x, batch_size)
-        print(x.shape)
-        x = x.resize_(*old_s)
+        x = gap(x, batch_size)  # [batch_size, hidden_channels]
         # 3. Apply a final classifier
         x = F.dropout(x, p=0.5, training=self.training)
         x = self.lin(x)
