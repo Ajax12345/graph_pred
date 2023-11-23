@@ -66,9 +66,14 @@ class GCN(torch.nn.Module):
         x = self.emb(x)
         # 1. Obtain node embeddings
         x = self.conv1(x, edge_index)
-        x = x.relu()
+        '''
+        for i in ['relu', 'elu', 'selu', 'celu', 'rrelu', 'logsigmoid', 'softmax', 'log_softmax', 'tanh', 'sigmoid', 'softmin', ]:
+            print(i, hasattr(x, i))
+        '''
+        #print('-'*20)
+        x = F.relu(x)
         x = self.conv2(x, edge_index)
-        x = x.relu()
+        x = F.relu(x)
         x = self.conv3(x, edge_index)
 
         # 2. Readout layer

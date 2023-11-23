@@ -7,7 +7,7 @@ import genotype_convolutions as g_c
 '''
 1. convolution layers:
     for each:
-        - activate (i.e relu, required)
+        - activate (i.e relu, required, https://pytorch.org/docs/stable/nn.functional.html#non-linear-activation-functions)
         - normalize (optional)
         - dropout (optional)
 

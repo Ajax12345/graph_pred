@@ -3,6 +3,9 @@ import torch, random
 import torch_geometric
 import numpy as np, torch_geometric.nn as tg_nn
 
+def obj_to_dict(obj) -> dict:
+    return {'name':obj.__class__.__name__, 'params':{a:str(b) for a, b in obj.__dict__.items()}}
+
 class Convolution:
     def __init__(self, genotype:'GraphGenotype') -> None:
         self.genotype = genotype
@@ -116,7 +119,7 @@ class SAGEConv(Convolution):
                 'name':self.__class__.__name__, 
                 'params':{'in_channels':self.genotype.network_state['in_channels'], 
                         'out_channels':self.genotype.network_state['out_channels'], 
-                        'aggr':self.aggr}}
+                        'aggr':obj_to_dict(self.aggr)}}
 
 class GraphConv(SAGEConv):
     def init(self) -> 'GraphConv':
@@ -146,7 +149,7 @@ class GatedGraphConv(SAGEConv):
                 'name':self.__class__.__name__, 
                 'params':{'in_channels':self.genotype.network_state['in_channels'], 
                         'out_channels':self.genotype.network_state['out_channels'], 
-                        'aggr':self.aggr, 'num_layers':self.num_layers}}
+                        'aggr':obj_to_dict(self.aggr), 'num_layers':self.num_layers}}
 
 
 class GATConv(GCNConv):
