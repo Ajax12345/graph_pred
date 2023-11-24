@@ -9,6 +9,7 @@ import genotype_pooling as g_p
 '''
 1. convolution layers:
     for each:
+        - transform (i.e torch.nn.Linear, optional)
         - activate (i.e relu, required, https://pytorch.org/docs/stable/nn.functional.html#non-linear-activation-functions)
         - normalize (optional)
         - dropout (optional)
@@ -42,6 +43,39 @@ class PropCounter:
 
         return self.vals.popleft()/self.s
 
+G_LAYERS = {'convolutions':[
+        (g_c.GCNConv, p(1)),
+        (g_c.ChebConv, p(1)),
+        (g_c.SAGEConv, p(6)),
+        (g_c.GraphConv, p(6)),
+        (g_c.GatedGraphConv, p(6)),
+        (g_c.GATConv, p(1)),
+        (g_c.CuGraphGATConv, p(1)),
+        (g_c.GATv2Conv, p(1)),
+        (g_c.TransformerConv, p(1)),
+        (g_c.TAGConv, p(1)),
+        (g_c.ARMAConv, p(1)),
+        (g_c.SGConv, p(1)),
+        (g_c.APPNP, p(1)),
+        (g_c.MFConv, p(1)),
+    ],
+    'normalizations':[
+        (g_n.BatchNorm, p(1)),
+        (g_n.InstanceNorm, p(1)),
+        (g_n.LayerNorm, p(1)),
+        (g_n.GraphNorm, p(1)),
+        (g_n.GraphSizeNorm, p(1)),
+        (g_n.PairNorm, p(1)),
+        (g_n.MeanSubtractionNorm, p(1)),
+        (g_n.DiffGroupNorm, p(1)),
+    ],
+    'pooling':[
+        (g_p.global_add_pool, p(1)),
+        (g_p.global_mean_pool, p(1)),
+        (g_p.global_max_pool, p(1)),
+    ]
+}
+
 class GraphGenotype:
     def __init__(self, global_params:typing.Optional[dict] = {}) -> None:
         self.network_state = global_params
@@ -49,38 +83,6 @@ class GraphGenotype:
 
 if __name__ == '__main__':
     gn = GraphGenotype({'in_channels':32, 'out_channels':32, 'num_node_features':9, 'num_classes':12, 'batch_size':None})
-    d = {'convolutions':[
-            (g_c.GCNConv, p(1)),
-            (g_c.ChebConv, p(1)),
-            (g_c.SAGEConv, p(1)),
-            (g_c.GraphConv, p(1)),
-            (g_c.GatedGraphConv, p(1)),
-            (g_c.GATConv, p(1)),
-            (g_c.CuGraphGATConv, p(1)),
-            (g_c.GATv2Conv, p(1)),
-            (g_c.TransformerConv, p(1)),
-            (g_c.TAGConv, p(1)),
-            (g_c.ARMAConv, p(1)),
-            (g_c.SGConv, p(1)),
-            (g_c.APPNP, p(1)),
-            (g_c.MFConv, p(1)),
-        ],
-        'normalizations':[
-            (g_n.BatchNorm, p(1)),
-            (g_n.InstanceNorm, p(1)),
-            (g_n.LayerNorm, p(1)),
-            (g_n.GraphNorm, p(1)),
-            (g_n.GraphSizeNorm, p(1)),
-            (g_n.PairNorm, p(1)),
-            (g_n.MeanSubtractionNorm, p(1)),
-            (g_n.DiffGroupNorm, p(1)),
-        ],
-        'pooling':[
-            (g_p.global_add_pool, p(1)),
-            (g_p.global_mean_pool, p(1)),
-            (g_p.global_max_pool, p(1)),
-        ]
-    }
     '''
     for [a] in d['pooling']:
         m = a(gn)

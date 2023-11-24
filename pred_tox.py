@@ -60,6 +60,7 @@ class GCN(torch.nn.Module):
         self.bn1 = BatchNorm(hidden_channels)
         self.conv3 = GCNConv(hidden_channels, hidden_channels)
         #self.conv3 = GatedGraphConv(hidden_channels, 5)
+        self.fc1 = Linear(hidden_channels, hidden_channels)
         self.pooling = TopKPooling(hidden_channels)
         self.lin = Linear(hidden_channels, num_classes)
 
@@ -75,10 +76,13 @@ class GCN(torch.nn.Module):
         #print('-'*20)
         x = F.relu(x)
         x = self.conv2(x, edge_index)
-        x = F.relu(x)
+        x = self.fc1(x)
+        x = F.softmax(x, dim = 1)
         x = self.bn1(x)
         x = self.conv3(x, edge_index)
-
+        #x = x.sigmoid()
+        #x = x.tanh()
+        x = F.sigmoid(x)
         # 2. Readout layer
         x = gap(x, batch_size)  # [batch_size, hidden_channels]
         # 3. Apply a final classifier
