@@ -1,5 +1,5 @@
 import typing, collections
-import torch, random
+import torch, random, json
 import torch_geometric
 import numpy as np, torch_geometric.nn as tg_nn
 import genotype_convolutions as g_c
@@ -201,8 +201,6 @@ class ConvolutionLayer:
             normalize = normalize,
             dropout = dropout
         )
-        
-
 
     def to_dict(self) -> dict:
         return {'type':self.__class__.__name__,
@@ -211,15 +209,21 @@ class ConvolutionLayer:
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}({", ".join(a+" = "+b.__class__.__name__ for a, b in self.__dict__.items())})'
     
+class W:
+    def __init__(self, gp):
+        self.gp = gp
+
+    def __getitem__(self, n):
+        return self.gp.get(n)
+
 
 class GraphGenotype:
     def __init__(self, global_params:typing.Optional[dict] = {}) -> None:
-        self.network_state = global_params
+        self.network_state = W(global_params)
         self.convolution_layers = None
         self.readout_layer = None
         self.final_dropout = None
         self.transformation = None
-
 
     def __getitem__(self, n:str) -> typing.Any:
         return self.network_state[n]
@@ -244,15 +248,27 @@ class GraphGenotype:
         GG.transformation = G_L.r_transform(GG)
         return GG
 
+    def to_dict(self) -> dict:
+        return {
+            'layers':[i.to_dict() for i in self.convolution_layers],
+            'readout_layer':self.readout_layer.to_dict(),
+            'final_dropout':self.final_dropout.to_dict(),
+            'transformation':self.transformation.to_dict()
+        }
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}(layer_num = {len(layers)})'
+
 
 if __name__ == '__main__':
-    gn = GraphGenotype({'in_channels':32, 'out_channels':32, 'num_node_features':9, 'num_classes':12, 'batch_size':None})
     '''
     for [a] in d['pooling']:
         m = a(gn)
         print(m)
     '''
-    print(ConvolutionLayer.random_layer(gn))
+    gn = GraphGenotype.random_gnn()
+    print(json.dumps(gn.to_dict(), indent=4))
+    
 
 
 
