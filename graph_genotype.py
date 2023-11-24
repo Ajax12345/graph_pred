@@ -21,7 +21,9 @@ import genotype_activations as g_ac
 2. Readout layer
     - global_mean_pool
 
-3. Transformation
+3. Final dropout
+
+4. Transformation
     torch.nn.Linear
 
 '''
@@ -163,9 +165,16 @@ class ConvolutionLayer:
 
     def init(self) -> None:
         for a, b in self.__dict__.items():
-            if b is not None:
+            if hasattr(b, 'init'):
                 _ = b.init()
-                
+
+        return self
+
+    def execute(self) -> None:
+        for a, b in self.__dict__.items():
+            if hasattr(b, 'execute'):
+                _ = b.execute()
+
         return self
 
     @classmethod
@@ -218,6 +227,22 @@ class GraphGenotype:
     def __setitem__(self, n:str, a:typing.Any) -> None:
         self.network_state[n] = a
         
+    def init(self) -> None:
+        for layer in self.convolution_layers:
+            layer.init()
+
+        self.readout_layer.init()
+        self.final_dropout.init()
+        self.transformation.init()
+
+    @classmethod
+    def random_gnn(cls, layers = (2, 5)) -> 'GraphGenotype':
+        GG = cls()
+        GG.convolution_layers = [ConvolutionLayer.random_layer(GG) for _ in range(random.randint(*layers))]
+        GG.readout_layer = G_L.r_pool(GG)
+        GG.final_dropout = G_L.r_dropout(GG)
+        GG.transformation = G_L.r_transform(GG)
+        return GG
 
 
 if __name__ == '__main__':
