@@ -90,7 +90,7 @@ G_LAYERS = {'convolutions':[
         (g_a.Linear, p(1)),
     ],
     'activations':[
-        (g_ac.relu, p(1)),
+        (g_ac.relu, p(10)),
         (g_ac.hardswish, p(1)),
         (g_ac.elu, p(1)),
         (g_ac.selu, p(1)),
@@ -172,14 +172,23 @@ class ConvolutionLayer:
         return self
 
     def execute(self, last = False) -> None:
-        for a, b in self.__dict__.items():
-            if hasattr(b, 'execute') and (not last or a == 'convolution'):
-                _ = b.execute()
+        self.convolution.execute()
+        if hasattr(self.transform, 'execute') and not last:
+            self.transform.execute()
+
+        if hasattr(self.activate, 'execute') and not last:
+            self.activate.execute()
+
+        if hasattr(self.normalize, 'execute') and not last:
+            self.normalize.execute()
+
+        if hasattr(self.dropout, 'execute') and not last:
+            self.dropout.execute()
 
         return self
 
     @classmethod
-    def random_layer(cls, GG, transform_prob = 0.5, normalize_prob = 0.7, dropout_prob = 0.4) -> 'ConvolutionLayer':
+    def random_layer(cls, GG, transform_prob = 0, normalize_prob = 0, dropout_prob = 0) -> 'ConvolutionLayer':
         convolution = G_L.r_convolution(GG)
         transform = None
         activate = G_L.r_activation(GG)

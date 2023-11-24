@@ -90,7 +90,7 @@ class SAGEConv(Convolution):
             tg_nn.aggr.SoftmaxAggregation(t = random.randint(1, 10)/10, learn = random.choice([True, False])),
             tg_nn.aggr.PowerMeanAggregation(learn = True),
             tg_nn.aggr.MedianAggregation(),
-            tg_nn.aggr.QuantileAggregation(random.randint(1, 100)/100, interpolation = random.choice(["lower", "higher", "midpoint", "nearest", "linear"]))
+            #tg_nn.aggr.QuantileAggregation(random.randint(1, 100)/100, interpolation = random.choice(["lower", "higher", "midpoint", "nearest", "linear"]))
         ]
 
         return random.choice(default_aggr + [tg_nn.aggr.MultiAggregation([random.choice(default_aggr) for _ in range(random.randint(3, 6))])])

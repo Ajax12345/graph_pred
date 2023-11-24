@@ -54,7 +54,7 @@ class GCN(torch.nn.Module):
         self.GG['num_node_features'] = num_node_features
         self.GG['num_classes'] = num_classes
         self.emb = AtomEncoder(hidden_channels=32)
-        
+        self.GG.init()
 
     def forward(self, batch):
         x , edge_index, batch_size = batch.x, batch.edge_index, batch.batch
@@ -64,12 +64,10 @@ class GCN(torch.nn.Module):
         self.GG['training'] = self.training
         self.GG['x'] = self.emb(self.GG['x'])
 
-        self.GG.init()
-
         for i, layer in enumerate(self.GG.convolution_layers):
             #print('layer', i)
             layer.execute(len(self.GG.convolution_layers) - 1 == i)
-        
+
         self.GG.readout_layer.execute()
         self.GG.final_dropout.execute()
         self.GG.transformation.execute()
@@ -78,11 +76,11 @@ class GCN(torch.nn.Module):
 
 
 def train(model, device, loader, optimizer, criterion):
-    model = model.to(device)
+    #model = model.to(device)
     model.train()
 
     for step, batch in enumerate(loader):
-        batch = batch.to(device)
+        #batch = batch.to(device)
         pred = model(batch)
         y = batch.y.view(pred.shape).to(torch.float64)
 
@@ -96,14 +94,14 @@ def train(model, device, loader, optimizer, criterion):
 
 
 def eval(model, device, loader, criterion):
-    model = model.to(device)
+    #model = model.to(device)
     model.eval()
     y_true = []
     y_pred = []
     # For every batch in test loader
     for batch in loader:
 
-        batch = batch.to(device)
+        #batch = batch.to(device)
         if batch.x.shape[0] == 1:
             pass
         else:

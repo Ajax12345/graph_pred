@@ -56,16 +56,16 @@ class GCN(torch.nn.Module):
         super(GCN, self).__init__()
         torch.manual_seed(42)
         self.emb = AtomEncoder(hidden_channels=32)
-        self.conv1 = ChebConv(hidden_channels,hidden_channels, 18)
-        self.ts1 = Linear(hidden_channels, hidden_channels)
-        self.norm1 = tc_nn.InstanceNorm(hidden_channels)
+        self.conv1 = tc_nn.GraphConv(hidden_channels, hidden_channels, aggr = tc_nn.aggr.MinAggregation())
 
+        '''
+        self.norm1 = tc_nn.PairNorm(scale = 0.69)
 
-        self.conv2 = tc_nn.TransformerConv(hidden_channels, hidden_channels)
-        self.ts1 = Linear(hidden_channels, hidden_channels)
-
-        self.conv3 = tc_nn.GatedGraphConv(hidden_channels, 8, aggr = tc_nn.aggr.MaxAggregation())
-        self.norm3 = tc_nn.PairNorm(scale = 0.73)
+        self.conv2 = tc_nn.GatedGraphConv(hidden_channels, 7, aggr = tc_nn.aggr.StdAggregation())
+        self.ts2 = Linear(hidden_channels, hidden_channels)
+        self.norm2 = tc_nn.GraphSizeNorm()
+        '''
+        #self.conv2 = tc_nn.GatedGraphConv(hidden_channels, 7, aggr = tc_nn.aggr.MinAggregation())
 
         self.lin = Linear(hidden_channels, num_classes)
 
@@ -73,23 +73,19 @@ class GCN(torch.nn.Module):
         x , edge_index, batch_size = batch.x, batch.edge_index, batch.batch
         x = self.emb(x)
         x = self.conv1(x, edge_index)
-        x = self.ts1(x)
-        x = F.elu(x)
+
+        #x = self.conv2(x, edge_index)
+
+        '''
         x = self.norm1(x)
-
-        x = self.conv2(x, edge_index)
-        x = self.ts1(x)
-        x = F.celu(x)
         x = F.dropout(x, p=0.5, training=self.training)
-
-        x = self.conv3(x, edge_index)
-        x = F.sigmoid(x)
-        x = self.norm3(x)
-
-
-
+        
+        x = self.conv2(x, edge_index)
+        x = self.ts2(x)
+        x = F.silu(x)
+        '''
         # 2. Readout layer
-        x = tc_nn.global_add_pool(x, batch_size)  # [batch_size, hidden_channels]
+        x = tc_nn.global_max_pool(x, batch_size)  # [batch_size, hidden_channels]
         # 3. Apply a final classifier
         x = F.dropout(x, p=0.5, training=self.training)
         x = self.lin(x)
