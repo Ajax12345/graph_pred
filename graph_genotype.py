@@ -31,6 +31,7 @@ import genotype_activations as g_ac
 '''
 dependencies:
     -  pynndescent
+    conda install -c nvidia pylibcugraphops (needed for CuGraphGATConv)
 '''
 
 class PropCounter:
@@ -61,7 +62,7 @@ G_LAYERS = {'convolutions':[
         (g_c.GraphConv, p(5)),
         (g_c.GatedGraphConv, p(5)),
         (g_c.GATConv, p(1)),
-        (g_c.CuGraphGATConv, p(1)),
+        #(g_c.CuGraphGATConv, p(1)), unable to install module
         (g_c.GATv2Conv, p(1)),
         (g_c.TransformerConv, p(1)),
         (g_c.TAGConv, p(1)),
@@ -170,9 +171,9 @@ class ConvolutionLayer:
 
         return self
 
-    def execute(self) -> None:
+    def execute(self, last = False) -> None:
         for a, b in self.__dict__.items():
-            if hasattr(b, 'execute'):
+            if hasattr(b, 'execute') and (not last or a == 'convolution'):
                 _ = b.execute()
 
         return self
@@ -216,6 +217,9 @@ class W:
     def __getitem__(self, n):
         return self.gp.get(n)
 
+    def __setitem__(self, n, a):
+        self.gp[n] = a
+
 
 class GraphGenotype:
     def __init__(self, global_params:typing.Optional[dict] = {}) -> None:
@@ -245,7 +249,7 @@ class GraphGenotype:
         GG.convolution_layers = [ConvolutionLayer.random_layer(GG) for _ in range(random.randint(*layers))]
         GG.readout_layer = G_L.r_pool(GG)
         GG.final_dropout = G_L.r_dropout(GG)
-        GG.transformation = G_L.r_transform(GG)
+        GG.transformation = g_a.LinearFinal(GG)
         return GG
 
     def to_dict(self) -> dict:

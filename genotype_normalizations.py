@@ -95,8 +95,7 @@ class PairNorm(Normalization):
 
 class MeanSubtractionNorm(BatchNorm):
     def init(self) -> 'MeanSubtractionNorm':
-        self.torch_obj_instance = tg_nn.MeanSubtractionNorm(
-            self.genotype.network_state['in_channels'])
+        self.torch_obj_instance = tg_nn.MeanSubtractionNorm()
 
         return self
 

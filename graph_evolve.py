@@ -5,7 +5,7 @@ from torch_geometric.data import Data
 from torch_geometric.data import DataLoader
 from torch_geometric.datasets import MoleculeNet
 from torch_geometric.data import DataLoader
-import torch.nn as nn
+import torch.nn as nn, json
 import torch.optim as optim
 from sklearn.metrics import roc_auc_score
 
@@ -47,6 +47,7 @@ class GCN(torch.nn.Module):
         super(GCN, self).__init__()
         torch.manual_seed(42)
         self.GG = graph_genotype.GraphGenotype.random_gnn()
+        print(json.dumps(self.GG.to_dict(), indent=4))
         self.GG['hidden_channels'] = hidden_channels
         self.GG['in_channels'] = hidden_channels
         self.GG['out_channels'] = hidden_channels
@@ -60,9 +61,18 @@ class GCN(torch.nn.Module):
         self.GG['x'] = x
         self.GG['edge_index'] = edge_index
         self.GG['batch_size'] = batch_size
-
+        self.GG['training'] = self.training
         self.GG['x'] = self.emb(self.GG['x'])
+
+        self.GG.init()
+
+        for i, layer in enumerate(self.GG.convolution_layers):
+            #print('layer', i)
+            layer.execute(len(self.GG.convolution_layers) - 1 == i)
         
+        self.GG.readout_layer.execute()
+        self.GG.final_dropout.execute()
+        self.GG.transformation.execute()
         
         return self.GG['x']
 

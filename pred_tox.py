@@ -6,7 +6,8 @@ from torch_geometric.data import DataLoader
 from torch_geometric.datasets import MoleculeNet
 import pickle
 from torch_geometric.data import DataLoader
-from torch_geometric.nn import GCNConv, GatedGraphConv, BatchNorm, TopKPooling
+from torch_geometric.nn import GCNConv, GatedGraphConv, BatchNorm, TopKPooling, ChebConv
+import torch_geometric.nn as tc_nn
 from torch_geometric.nn import global_mean_pool as gap
 import torch.nn.functional as F
 from torch.nn import Linear
@@ -55,53 +56,40 @@ class GCN(torch.nn.Module):
         super(GCN, self).__init__()
         torch.manual_seed(42)
         self.emb = AtomEncoder(hidden_channels=32)
-        self.conv1 = GCNConv(hidden_channels,hidden_channels)
-        self.conv2 = GCNConv(hidden_channels, hidden_channels)
-        self.bn1 = BatchNorm(hidden_channels)
-        self.conv3 = GCNConv(hidden_channels, hidden_channels)
-        #self.conv3 = GatedGraphConv(hidden_channels, 5)
-        self.fc1 = Linear(hidden_channels, hidden_channels)
-        self.pooling = TopKPooling(hidden_channels)
+        self.conv1 = ChebConv(hidden_channels,hidden_channels, 18)
+        self.ts1 = Linear(hidden_channels, hidden_channels)
+        self.norm1 = tc_nn.InstanceNorm(hidden_channels)
+
+
+        self.conv2 = tc_nn.TransformerConv(hidden_channels, hidden_channels)
+        self.ts1 = Linear(hidden_channels, hidden_channels)
+
+        self.conv3 = tc_nn.GatedGraphConv(hidden_channels, 8, aggr = tc_nn.aggr.MaxAggregation())
+        self.norm3 = tc_nn.PairNorm(scale = 0.73)
+
         self.lin = Linear(hidden_channels, num_classes)
 
     def forward(self, batch):
         x , edge_index, batch_size = batch.x, batch.edge_index, batch.batch
         x = self.emb(x)
-        # 1. Obtain node embeddings
         x = self.conv1(x, edge_index)
-        '''
-        for i in ['relu', 'elu', 'selu', 'celu', 'rrelu', 'logsigmoid', 'softmax', 'log_softmax', 'tanh', 'sigmoid', 'softmin', ]:
-            print(i, hasattr(x, i))
-        '''
-        #print('-'*20)
-        x = F.relu(x)
+        x = self.ts1(x)
+        x = F.elu(x)
+        x = self.norm1(x)
+
         x = self.conv2(x, edge_index)
-        x = self.fc1(x)
-        x = F.softmax(x, dim = 1)
-        x = self.bn1(x)
+        x = self.ts1(x)
+        x = F.celu(x)
+        x = F.dropout(x, p=0.5, training=self.training)
+
         x = self.conv3(x, edge_index)
-        #x = x.sigmoid()
-        #x = x.tanh()
+        x = F.sigmoid(x)
+        x = self.norm3(x)
 
-        #x = F.relu(x)
-        #x = F.hardswish(x)
-        #x = F.elu(x)
-        #x = F.selu(x)
-        #x = F.celu(x)
-        #x = F.rrelu(x)
-        #x = F.logsigmoid(x)
-        #x = F.hardshrink(x)
-        #x = F.softplus(x)
-        #x = F.tanh(x)
-        #x = F.sigmoid(x)
-        #x = F.silu(x)
-        #x= F.mish(x)
 
-        
-        #x = self.fc1(x)
-        #x = self.bn1(x)
+
         # 2. Readout layer
-        x = gap(x, batch_size)  # [batch_size, hidden_channels]
+        x = tc_nn.global_add_pool(x, batch_size)  # [batch_size, hidden_channels]
         # 3. Apply a final classifier
         x = F.dropout(x, p=0.5, training=self.training)
         x = self.lin(x)

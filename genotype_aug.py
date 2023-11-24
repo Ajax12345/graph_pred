@@ -32,6 +32,14 @@ class Linear:
             'params':{'in_channels':self.genotype.network_state['in_channels'], 'out_channels':self.genotype.network_state['out_channels']}}
 
 
+class LinearFinal(Linear):
+    def init(self) -> 'nn.Linear':
+        self.torch_obj_instance = nn.Linear(
+            self.genotype.network_state['in_channels'],
+            self.genotype.network_state['num_classes'])
+
+        return self
+
 class dropout:
     def __init__(self, genotype:'GraphGenotype') -> None:
         self.genotype = genotype
