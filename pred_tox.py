@@ -82,7 +82,24 @@ class GCN(torch.nn.Module):
         x = self.conv3(x, edge_index)
         #x = x.sigmoid()
         #x = x.tanh()
-        x = F.sigmoid(x)
+
+        #x = F.relu(x)
+        #x = F.hardswish(x)
+        #x = F.elu(x)
+        #x = F.selu(x)
+        #x = F.celu(x)
+        #x = F.rrelu(x)
+        #x = F.logsigmoid(x)
+        #x = F.hardshrink(x)
+        #x = F.softplus(x)
+        #x = F.tanh(x)
+        #x = F.sigmoid(x)
+        #x = F.silu(x)
+        #x= F.mish(x)
+
+        
+        #x = self.fc1(x)
+        #x = self.bn1(x)
         # 2. Readout layer
         x = gap(x, batch_size)  # [batch_size, hidden_channels]
         # 3. Apply a final classifier

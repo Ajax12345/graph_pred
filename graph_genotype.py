@@ -5,6 +5,7 @@ import numpy as np, torch_geometric.nn as tg_nn
 import genotype_convolutions as g_c
 import genotype_normalizations as g_n
 import genotype_pooling as g_p
+import genotype_aug as g_a
 
 '''
 1. convolution layers:
@@ -13,6 +14,8 @@ import genotype_pooling as g_p
         - activate (i.e relu, required, https://pytorch.org/docs/stable/nn.functional.html#non-linear-activation-functions)
         - normalize (optional)
         - dropout (optional)
+
+        If parent is the last convolutional layer, do not perform any of the steps above
 
 2. Readout layer
     - global_mean_pool
@@ -73,12 +76,27 @@ G_LAYERS = {'convolutions':[
         (g_p.global_add_pool, p(1)),
         (g_p.global_mean_pool, p(1)),
         (g_p.global_max_pool, p(1)),
+    ],
+    'transforms':[
+        (g_a.Linear, p(1)),
+    ],
+    'dropout':[
+        (g_a.dropout, p(1)),
     ]
 }
 
 class GraphGenotype:
     def __init__(self, global_params:typing.Optional[dict] = {}) -> None:
         self.network_state = global_params
+        
+        self.genotype.network_state['x']
+        self.genotype.network_state['edge_index']
+        self.genotype.network_state['in_channels']
+        self.genotype.network_state['out_channels']
+        self.genotype.network_state['training']
+        self.genotype.network_state['batch_size']
+        self.genotype.network_state['num_node_features']
+        self.genotype.network_state['num_classes']
 
 
 if __name__ == '__main__':
