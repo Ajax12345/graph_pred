@@ -6,6 +6,7 @@ import genotype_convolutions as g_c
 import genotype_normalizations as g_n
 import genotype_pooling as g_p
 import genotype_aug as g_a
+import genotype_activations as g_ac
 
 '''
 1. convolution layers:
@@ -80,6 +81,21 @@ G_LAYERS = {'convolutions':[
     'transforms':[
         (g_a.Linear, p(1)),
     ],
+    'activations':[
+        (g_ac.relu, p(1)),
+        (g_ac.hardswish, p(1)),
+        (g_ac.elu, p(1)),
+        (g_ac.selu, p(1)),
+        (g_ac.celu, p(1)),
+        (g_ac.rrelu, p(1)),
+        (g_ac.logsigmoid, p(1)),
+        (g_ac.hardshrink, p(1)),
+        (g_ac.softplus, p(1)),
+        (g_ac.tanh, p(1)),
+        (g_ac.sigmoid, p(1)),
+        (g_ac.silu, p(1)),
+        (g_ac.mish, p(1))
+    ]
     'dropout':[
         (g_a.dropout, p(1)),
     ]
