@@ -49,7 +49,7 @@ class dropout:
     def update_random_params(self) -> bool:
         self.p = random.randint(35, 85)/100
 
-        return self
+        return True
 
     def init(self) -> 'nn.Linear':
         self.torch_obj_instance = F.dropout

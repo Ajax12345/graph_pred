@@ -155,22 +155,59 @@ class g_layer_wrapper:
 G_L = g_layer_wrapper()
 
 class ConvolutionLayer:
-    def __init__(self, convolution, transform = None, activate = None, 
+    def __init__(self, GG, convolution, transform = None, activate = None, 
                         normalize = None, dropout = None) -> None:
         self.convolution = convolution
         self.transform = transform
         self.activate = activate
         self.normalize = normalize
         self.dropout = dropout
+        self.GG = GG
         if self.activate is None:
             raise Exception('activation must be specified')
 
     def init(self) -> None:
         for a, b in self.__dict__.items():
-            if hasattr(b, 'init'):
+            if a != 'GG' and hasattr(b, 'init'):
                 self.__dict__[a] = b.init()
 
         return self
+
+    def update_random_params(self, p = 0.2) -> None:
+        l = [self.convolution.update_random_params()]
+        
+        if random.random() <= p:
+            if self.transform is None:
+                self.transform = G_L.r_transform(self.GG)
+
+            else:
+                self.transform = None
+            
+            l.append(True)
+
+        if random.random() <= p:
+            self.activate = G_L.r_activation(self.GG)
+            l.append(True)
+
+        if random.random() <= p:
+            if self.normalize is None:
+                self.normalize = G_L.r_normalization(self.GG)
+            
+            else:
+                self.normalize = None
+            
+            l.append(True)
+
+        if random.random() <= p:
+            if self.dropout is None:
+                self.dropout = G_L.r_dropout(self.GG)
+
+            else:
+                self.dropout = None
+            
+            l.append(True)
+
+        return any(l)
 
     def execute(self, last = False) -> None:
         self.convolution.execute()
@@ -206,6 +243,7 @@ class ConvolutionLayer:
             dropout = G_L.r_dropout(GG)
 
         return cls(
+            GG,
             convolution,
             transform = transform,
             activate = activate,
@@ -215,10 +253,10 @@ class ConvolutionLayer:
 
     def to_dict(self) -> dict:
         return {'type':self.__class__.__name__,
-                **{a:b if b is None else b.to_dict() for a, b in self.__dict__.items()}}
+                **{a:b if b is None else b.to_dict() for a, b in self.__dict__.items() if a != 'GG'}}
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}({", ".join(a+" = "+b.__class__.__name__ for a, b in self.__dict__.items())})'
+        return f'{self.__class__.__name__}({", ".join(a+" = "+b.__class__.__name__ for a, b in self.__dict__.items() if a != "GG")})'
     
 class W:
     def __init__(self, gp):
@@ -239,6 +277,59 @@ class GraphGenotype:
         self.final_dropout = None
         self.transformation = None
 
+    def add_layer(self) -> bool:
+        assert self.convolution_layers is not None
+        self.convolution_layers.append(ConvolutionLayer.random_layer(self))
+        return True
+
+    def remove_layer(self) -> bool:
+        assert self.convolution_layers is not None
+        if len(self.convolution_layers) == 1:
+            return False
+
+        I = random.randint(0, len(self.convolution_layers) - 1)
+        self.convolution_layers = self.convolution_layers[:I]+self.convolution_layers[I+1:]
+        return True
+
+    def swap_layers(self) -> bool:
+        assert self.convolution_layers is not None
+        if len(self.convolution_layers) == 1:
+            return False
+
+        I = random.randint(0, len(self.convolution_layers) - 2)
+        I1 = random.randint(I+1, len(self.convolution_layers) - 1)
+        l = self.convolution_layers[I1]
+        self.convolution_layers[I1] = self.convolution_layers[I]
+        self.convolution_layers[I] = l
+        return True
+
+    def update_layers(self) -> bool:
+        assert self.convolution_layers is not None
+        layers = [*range(len(self.convolution_layers))]
+        while layers:
+            I = random.choice(layers)
+            if self.convolution_layers[I].update_random_params():
+                print('update mutation ind', I)
+                return True
+
+            layers.remove(I)
+        
+
+        I = random.randint(0, len(self.convolution_layers) - 1)
+        print('layer update', I)
+        self.convolution_layers[I] = ConvolutionLayer.random_layer(self)
+        
+        return True
+
+
+    def mutate(self) -> None:
+        options = ['add_layer', 'remove_layer', 'swap_layers', 'update_layers']
+        random.shuffle(options)
+        for option in options:
+            if getattr(self, options)():
+                print('performed', option)
+                return
+
     @classmethod
     def all_modules(cls, obj) -> typing.Iterator:
         if hasattr(obj, 'torch_obj_instance'):
@@ -254,7 +345,8 @@ class GraphGenotype:
             return
         
         for a, b in getattr(obj, '__dict__', {}).items():
-            yield from cls.all_modules(b)
+            if a != 'GG':
+                yield from cls.all_modules(b)
 
     def __getitem__(self, n:str) -> typing.Any:
         return self.network_state[n]
@@ -298,6 +390,9 @@ if __name__ == '__main__':
         print(m)
     '''
     gn = GraphGenotype.random_gnn()
+    print(json.dumps(gn.to_dict(), indent=4))
+    print('-'*50)
+    gn.mutate()
     print(json.dumps(gn.to_dict(), indent=4))
     
 

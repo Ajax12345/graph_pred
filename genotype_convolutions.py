@@ -4,7 +4,7 @@ import torch_geometric
 import numpy as np, torch_geometric.nn as tg_nn
 
 def obj_to_dict(obj) -> dict:
-    return {'name':obj.__class__.__name__, 'params':{a:str(b) for a, b in obj.__dict__.items()}}
+    return {'name':obj.__class__.__name__, 'params':str(obj)}
 
 class Convolution:
     def __init__(self, genotype:'GraphGenotype') -> None:
@@ -47,7 +47,7 @@ class ChebConv(Convolution):
         
     def update_random_params(self) -> None:
         self.K = random.randint(2, 20)
-        return self.init()
+        return True
 
     def init(self) -> 'ChebConv':
         self.torch_obj_instance = tg_nn.ChebConv(
@@ -97,7 +97,7 @@ class SAGEConv(Convolution):
 
     def update_random_params(self) -> None:
         self.aggr = self.random_aggregation()
-        return self.init()
+        return True
 
     def init(self) -> 'SAGEConv':
         self.torch_obj_instance = tg_nn.SAGEConv(
@@ -194,7 +194,7 @@ class TAGConv(Convolution):
         
     def update_random_params(self) -> None:
         self.K = random.randint(2, 7)
-        return self.init()
+        return True
 
     def init(self) -> 'TAGConv':
         self.torch_obj_instance = tg_nn.TAGConv(
@@ -229,7 +229,7 @@ class ARMAConv(Convolution):
         self.num_stacks = random.randint(2, 5)
         self.num_layers = random.randint(2, 5)
         self.dropout = random.randint(0, 5)/10
-        return self.init()
+        return True
 
     def init(self) -> 'ARMAConv':
         self.torch_obj_instance = tg_nn.ARMAConv(
@@ -265,7 +265,7 @@ class SGConv(Convolution):
         
     def update_random_params(self) -> None:
         self.K = random.randint(1, 5)
-        return self.init()
+        return True
         
     def init(self) -> 'ARMAConv':
         self.torch_obj_instance = tg_nn.SGConv(
@@ -301,7 +301,7 @@ class APPNP(Convolution):
         self.K = random.randint(1, 5)
         self.alpha = random.randint(1,100)/100
         self.dropout = random.randint(0, 5)/10
-        return self.init()
+        return True
 
     def init(self) -> 'APPNP':
         self.torch_obj_instance = tg_nn.APPNP(

@@ -55,7 +55,7 @@ class TopKPooling(Pooling):
 
     def update_random_params(self) -> None:
         self.ratio = self.random_ratio()
-        return self.init()
+        return True
 
     def init(self) -> 'TopKPooling':
         self.torch_obj_instance = tg_nn.TopKPooling(

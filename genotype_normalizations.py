@@ -80,7 +80,7 @@ class PairNorm(Normalization):
     
     def update_random_params(self) -> None:
         self.scale = self.random_scale()
-        return self.init()
+        return True
 
     def execute(self) -> None:
         self.genotype.network_state['x'] = self.torch_obj_instance(
@@ -122,8 +122,8 @@ class DiffGroupNorm(Normalization):
             self.genotype.network_state['x'])
     
     def update_random_params(self) -> None:
-        self.random_group_chunk
-        return self.init()
+        self.random_group_chunk()
+        return True
 
     def to_dict(self) -> dict:
         return {'type':'normalization', 
