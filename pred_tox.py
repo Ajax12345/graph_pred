@@ -56,8 +56,9 @@ class GCN(torch.nn.Module):
         super(GCN, self).__init__()
         torch.manual_seed(42)
         self.emb = AtomEncoder(hidden_channels=32)
-        self.conv1 = tc_nn.GraphConv(hidden_channels, hidden_channels, aggr = tc_nn.aggr.MinAggregation())
-
+        self.conv1 = tc_nn.GatedGraphConv(hidden_channels, hidden_channels, aggr = tc_nn.aggr.MinAggregation())
+        self.conv2 = tc_nn.SAGEConv(hidden_channels, hidden_channels, aggr = tc_nn.aggr.MeanAggregation())
+        #self.conv3 = tc_nn.ARMAConv(hidden_channels, hidden_channels, num_stacks = 3, num_layers = 4, dropout = 0.1)
         '''
         self.norm1 = tc_nn.PairNorm(scale = 0.69)
 
@@ -73,7 +74,12 @@ class GCN(torch.nn.Module):
         x , edge_index, batch_size = batch.x, batch.edge_index, batch.batch
         x = self.emb(x)
         x = self.conv1(x, edge_index)
+        x = F.relu(x)
 
+        x = self.conv2(x, edge_index)
+        #x = F.rrelu(x)
+
+        #x = self.conv3(x, edge_index)
         #x = self.conv2(x, edge_index)
 
         '''

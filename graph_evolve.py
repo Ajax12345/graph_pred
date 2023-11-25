@@ -53,8 +53,12 @@ class GCN(torch.nn.Module):
         self.GG['out_channels'] = hidden_channels
         self.GG['num_node_features'] = num_node_features
         self.GG['num_classes'] = num_classes
+        self.layers = nn.ModuleList()
         self.emb = AtomEncoder(hidden_channels=32)
         self.GG.init()
+        for i in graph_genotype.GraphGenotype.all_modules(self.GG):
+            #print('module here', i)
+            self.layers.append(i)
 
     def forward(self, batch):
         x , edge_index, batch_size = batch.x, batch.edge_index, batch.batch
@@ -67,6 +71,7 @@ class GCN(torch.nn.Module):
         for i, layer in enumerate(self.GG.convolution_layers):
             #print('layer', i)
             layer.execute(len(self.GG.convolution_layers) - 1 == i)
+            #layer.execute()
 
         self.GG.readout_layer.execute()
         self.GG.final_dropout.execute()
@@ -146,4 +151,6 @@ def run_training(model) -> None:
 
 if __name__ == '__main__':
     model = GCN(32, 9, 12)
+    print(model)
     run_training(model)
+    #print(model)

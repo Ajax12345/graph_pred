@@ -1,6 +1,7 @@
 import typing, collections
 import torch, random, json
 import torch_geometric
+import torch.nn as nn
 import numpy as np, torch_geometric.nn as tg_nn
 import genotype_convolutions as g_c
 import genotype_normalizations as g_n
@@ -167,7 +168,7 @@ class ConvolutionLayer:
     def init(self) -> None:
         for a, b in self.__dict__.items():
             if hasattr(b, 'init'):
-                _ = b.init()
+                self.__dict__[a] = b.init()
 
         return self
 
@@ -188,7 +189,7 @@ class ConvolutionLayer:
         return self
 
     @classmethod
-    def random_layer(cls, GG, transform_prob = 0, normalize_prob = 0, dropout_prob = 0) -> 'ConvolutionLayer':
+    def random_layer(cls, GG, transform_prob = 0.4, normalize_prob = 0.5, dropout_prob = 0.5) -> 'ConvolutionLayer':
         convolution = G_L.r_convolution(GG)
         transform = None
         activate = G_L.r_activation(GG)
@@ -237,6 +238,23 @@ class GraphGenotype:
         self.readout_layer = None
         self.final_dropout = None
         self.transformation = None
+
+    @classmethod
+    def all_modules(cls, obj) -> typing.Iterator:
+        if hasattr(obj, 'torch_obj_instance'):
+            if isinstance(obj.torch_obj_instance, nn.Module):
+                yield obj.torch_obj_instance
+
+            return
+
+        if isinstance(obj, list):
+            for i in obj:
+                yield from cls.all_modules(i)
+
+            return
+        
+        for a, b in getattr(obj, '__dict__', {}).items():
+            yield from cls.all_modules(b)
 
     def __getitem__(self, n:str) -> typing.Any:
         return self.network_state[n]
