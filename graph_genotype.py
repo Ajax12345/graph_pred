@@ -369,6 +369,17 @@ class GraphGenotype:
         GG.transformation = g_a.LinearFinal(GG)
         return GG
 
+    def purge(self) -> None:
+        self['hidden_channels'] = None
+        self['in_channels'] = None
+        self['out_channels'] = None
+        self['num_node_features'] = None
+        self['num_classes'] = None
+        self['x'] = None
+        self['edge_index'] = None
+        self['batch_size'] = None
+        self['training'] = None
+
     def to_dict(self) -> dict:
         return {
             'layers':[i.to_dict() for i in self.convolution_layers],

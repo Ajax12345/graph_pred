@@ -9,15 +9,8 @@ import torch.nn as nn, json, random
 import torch.optim as optim, os, time
 from sklearn.metrics import roc_auc_score
 
-train_dataset = torch.load("datasets/train_data.pt")
-valid_dataset = torch.load("datasets/valid_data.pt")
-test_dataset = torch.load("datasets/test_data.pt")
-
 
 batch_size=32
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-val_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=False)
-test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 class AtomEncoder(torch.nn.Module):
     def __init__(self, hidden_channels):
@@ -133,14 +126,14 @@ def eval(model, device, loader, criterion):
 
     return {'rocauc': sum(rocauc_list)/len(rocauc_list)}
 
-def run_training(model) -> None:
+def run_training(train_loader, val_loader, model, train_evolutions) -> None:
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.BCEWithLogitsLoss(reduction = "none")
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     #device = torch.device('mps')
     #print("Start training...")
     results = []
-    for epoch in range(1, 5):
+    for epoch in range(1, train_evolutions+1):
         #print("====epoch " + str(epoch))
 
         # training
@@ -153,43 +146,59 @@ def run_training(model) -> None:
 
     return results
 
-def run_evolutionary_process(pop_size = 10, iterations = 10, prob_mutations = 0.4) -> None:
+def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations = 10, train_evolutions = 4, prob_mutations = 0.4) -> None:
     #model = GCN(32, 9, 12)
     #graph_genotype.GraphGenotype.random_gnn()
     os.mkdir(root_path:=f'results{str(time.time()).split(".")[0]}')
-    all_results = []
+    all_results, best_results = [], []
     population = [graph_genotype.GraphGenotype.random_gnn() for _ in range(pop_size)]
     for _ in range(iterations):
-        print('iteration', _)
+        print('iteration', _ + 1)
         n_p = []
         error_count, pop_count = 0, 0
         for gg in population:
             model = GCN(gg, 32, 9, 12)
             pop_count += 1
             try:
-                training_results = run_training(model)
+                training_results = run_training(train_loader, val_loader, model, train_evolutions)
                 n_p.append([max(training_results, key=lambda x:x['Validation']['rocauc'])['Validation']['rocauc'], gg])
             except:
-                print(traceback.format_exc())
+                #print(traceback.format_exc())
                 error_count += 1
 
             print('error percentage', error_count/pop_count)
 
         if not n_p:
-            population = [graph_genotype.GraphGenotype.random_gnn() for _ in range(50)]
+            population = [random.choice(best_results) for _ in range(pop_size)]
             continue
 
         score, m_gg = max(n_p, key=lambda x:x[0])
-        print('best score', score)
+        model = GCN(m_gg, 32, 9, 12)
+        try:
+            training_results = run_training(train_loader, val_loader, model, 4)
+            score = max(training_results, key=lambda x:x['Validation']['rocauc'])['Validation']['rocauc']
+            print('best score', score)
+        except:
+            print('best score (one epoch)', score)
+
         all_results.append([score, m_gg.to_dict()])
+        best_results.append(m_gg)
+        '''
         scores, a_gg = zip(*n_p)
         s_scores = sum(scores)
         population = []
+    
         for g in random.choices(a_gg, weights = [i/s_scores for i in scores], k = pop_size):
             g.mutate()
-
-            population.append(copy.deepcopy(g))
             
+            population.append(g)
+        '''
+        population = [] 
+        m_gg.purge()
+        for _ in range(pop_size):
+            p_gg = copy.deepcopy(m_gg)
+            p_gg.mutate()
+            population.append(p_gg)
 
     print('final result!')
     print(max(all_results, key=lambda x:x[0]))
@@ -204,5 +213,15 @@ if __name__ == '__main__':
     run_training(model)
     #print(model)
     '''
+    train_dataset = torch.load("/Users/jamespetullo/graph_pred_datasets/datasets/train_data.pt")
+    valid_dataset = torch.load("/Users/jamespetullo/graph_pred_datasets/datasets/valid_data.pt")
+    test_dataset = torch.load("/Users/jamespetullo/graph_pred_datasets/datasets/test_data.pt")
+
+    
+    batch_size=32
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     #https://packaging.python.org/en/latest/tutorials/packaging-projects/
-    run_evolutionary_process(iterations = 1)
+    run_evolutionary_process(train_loader, val_loader, pop_size = 20, iterations = 10, train_evolutions = 1) 
+    
