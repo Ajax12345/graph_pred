@@ -14,7 +14,7 @@ class Pooling:
     def to_dict(self) -> dict:
         return {'type':'pooling', 
             'name':self.__class__.__name__, 
-            'params':{'in_channels':self.genotype.network_state['in_channels'], 'batch_size':self.genotype.network_state['batch_size']}}
+            'params':{'in_channels':self.genotype.network_state['in_channels']}}
 
     def __repr__(self) -> str:
         d = self.to_dict()

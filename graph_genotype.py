@@ -326,8 +326,8 @@ class GraphGenotype:
         options = ['add_layer', 'remove_layer', 'swap_layers', 'update_layers']
         random.shuffle(options)
         for option in options:
-            if getattr(self, options)():
-                print('performed', option)
+            if getattr(self, option)():
+                #print('performed', option)
                 return
 
     @classmethod

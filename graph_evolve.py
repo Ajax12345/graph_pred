@@ -1,12 +1,12 @@
 import graph_genotype, torch
-import torch_geometric
-import numpy as np, pickle
+import torch_geometric, traceback
+import numpy as np, pickle, copy
 from torch_geometric.data import Data
 from torch_geometric.data import DataLoader
 from torch_geometric.datasets import MoleculeNet
 from torch_geometric.data import DataLoader
-import torch.nn as nn, json
-import torch.optim as optim
+import torch.nn as nn, json, random
+import torch.optim as optim, os
 from sklearn.metrics import roc_auc_score
 
 train_dataset = torch.load("datasets/train_data.pt")
@@ -43,11 +43,11 @@ class AtomEncoder(torch.nn.Module):
 
 
 class GCN(torch.nn.Module):
-    def __init__(self, hidden_channels, num_node_features, num_classes):
+    def __init__(self, GG, hidden_channels, num_node_features, num_classes):
         super(GCN, self).__init__()
         torch.manual_seed(42)
-        self.GG = graph_genotype.GraphGenotype.random_gnn()
-        print(json.dumps(self.GG.to_dict(), indent=4))
+        self.GG = GG
+        #print(json.dumps(self.GG.to_dict(), indent=4))
         self.GG['hidden_channels'] = hidden_channels
         self.GG['in_channels'] = hidden_channels
         self.GG['out_channels'] = hidden_channels
@@ -136,10 +136,12 @@ def eval(model, device, loader, criterion):
 def run_training(model) -> None:
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.BCEWithLogitsLoss(reduction = "none")
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    print("Start training...")
+    #device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    device = torch.device('mps')
+    #print("Start training...")
+    results = []
     for epoch in range(1, 5):
-        print("====epoch " + str(epoch))
+        #print("====epoch " + str(epoch))
 
         # training
         train(model, device, train_loader, optimizer, criterion)
@@ -147,10 +149,59 @@ def run_training(model) -> None:
         # evaluating
         train_acc = eval(model, device, train_loader, criterion)
         val_acc = eval(model, device, val_loader, criterion)
-        print({'Train': train_acc, 'Validation': val_acc})
+        results.append({'Train': train_acc, 'Validation': val_acc})
+
+    return results
+
+def run_evolutionary_process(pop_size = 10, iterations = 10, prob_mutations = 0.4, folder = 'results') -> None:
+    #model = GCN(32, 9, 12)
+    #graph_genotype.GraphGenotype.random_gnn()
+    all_results = []
+    population = [graph_genotype.GraphGenotype.random_gnn() for _ in range(pop_size)]
+    for _ in range(10):
+        print('iteration', _)
+        n_p = []
+        error_count, pop_count = 0, 0
+        for gg in population:
+            model = GCN(gg, 32, 9, 12)
+            pop_count += 1
+            try:
+                training_results = run_training(model)
+                n_p.append([max(training_results, key=lambda x:x['Validation']['rocauc'])['Validation']['rocauc'], gg])
+            except:
+                print(traceback.format_exc())
+                error_count += 1
+
+            print('error percentage', error_count/pop_count)
+
+        if not n_p:
+            population = [graph_genotype.GraphGenotype.random_gnn() for _ in range(50)]
+            continue
+
+        score, m_gg = max(n_p, key=lambda x:x[0])
+        print('best score', score)
+        all_results.append([score, m_gg.to_dict()])
+        scores, a_gg = zip(*n_p)
+        s_scores = sum(scores)
+        population = []
+        for g in random.choices(a_gg, weights = [i/s_scores for i in scores], k = pop_size):
+            if random.random() <= prob_mutations:
+                g.mutate()
+
+            population.append(copy.deepcopy(g))
+            
+
+    print('final result!')
+    print(max(all_results, key=lambda x:x[0]))
+    with open(os.path.join(folder, 'results.json'), 'a') as f:
+        json.dump(all_results, f)
 
 if __name__ == '__main__':
-    model = GCN(32, 9, 12)
+    '''
+    GG = graph_genotype.GraphGenotype.random_gnn()
+    model = GCN(GG, 32, 9, 12)
     print(model)
     run_training(model)
     #print(model)
+    '''
+    run_evolutionary_process()
