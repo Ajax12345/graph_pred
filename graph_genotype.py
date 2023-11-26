@@ -378,7 +378,7 @@ class GraphGenotype:
         }
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}(layer_num = {len(layers)})'
+        return f'{self.__class__.__name__}(layer_num = {len(self.layers)})'
 
 
 if __name__ == '__main__':

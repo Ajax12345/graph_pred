@@ -205,4 +205,4 @@ if __name__ == '__main__':
     #print(model)
     '''
     #https://packaging.python.org/en/latest/tutorials/packaging-projects/
-    run_evolutionary_process(folder = 'results2')
+    run_evolutionary_process(iterations = 1, folder = 'results2')
