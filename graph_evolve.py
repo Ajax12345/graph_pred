@@ -150,6 +150,9 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
     #model = GCN(32, 9, 12)
     #graph_genotype.GraphGenotype.random_gnn()
     os.mkdir(root_path:=f'results{str(time.time()).split(".")[0]}')
+    with open(os.path.join(root_path, 'results.json'), 'a') as f:
+        pass
+
     all_results, best_results = [], []
     population = [graph_genotype.GraphGenotype.random_gnn() for _ in range(pop_size)]
     for _ in range(iterations):
@@ -193,16 +196,21 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
             
             population.append(g)
         '''
-        population = [] 
+        population = []
         m_gg.purge()
-        for _ in range(pop_size):
+        for _ in range(pop_size-5):
             p_gg = copy.deepcopy(m_gg)
             p_gg.mutate()
             population.append(p_gg)
+        
+        population.extend([random.choice(n_p)[-1] for _ in range(5)])
+
+        with open(os.path.join(root_path, 'results.json'), 'w') as f:
+            json.dump(all_results, f)
 
     print('final result!')
     print(max(all_results, key=lambda x:x[0]))
-    with open(os.path.join(root_path, 'results.json'), 'a') as f:
+    with open(os.path.join(root_path, 'results.json'), 'w') as f:
         json.dump(all_results, f)
 
 if __name__ == '__main__':
@@ -223,5 +231,5 @@ if __name__ == '__main__':
     val_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     #https://packaging.python.org/en/latest/tutorials/packaging-projects/
-    run_evolutionary_process(train_loader, val_loader, pop_size = 20, iterations = 10, train_evolutions = 1) 
+    run_evolutionary_process(train_loader, val_loader, pop_size = 20, iterations = 10, train_evolutions = 2) 
     

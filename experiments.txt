@@ -1,0 +1,46 @@
+Experiment 1:
+    Nov 26 @ 10:57
+
+    Single P (highest performning result) chosen as parent
+        - two training epochs apiece
+
+    Future experiments:
+        - remove "update" mutation
+        - at the generation of a new population, add k random values from n_p so as to contribute to genetic diversity
+
+    Peak performance of 75%
+
+
+Experiment 2:
+    Nov 26 @ 11:17
+
+    Single P (highest performning result) chosen as parent
+        - two training epochs apiece
+
+        - remove "update" mutation
+
+        - at the generation of a new population, add k random values from n_p so as to contribute to genetic diversity
+
+
+    Future experiments:
+        - re-introduce update with a very small probability
+        - 
+
+    Best incrementational results so far!
+
+
+
+Experiment 3:
+    Nov 26 @ 11:51
+
+    Single P (highest performning result) chosen as parent
+        - two training epochs apiece
+
+        - remove "update" mutation
+
+        - at the generation of a new population, add k random values from n_p so as to contribute to genetic diversity
+
+        - re-introduce update with a very small probability
+
+    Observations:
+        - Updating does not improve accuracy
