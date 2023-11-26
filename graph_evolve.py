@@ -6,7 +6,7 @@ from torch_geometric.data import DataLoader
 from torch_geometric.datasets import MoleculeNet
 from torch_geometric.data import DataLoader
 import torch.nn as nn, json, random
-import torch.optim as optim, os
+import torch.optim as optim, os, time
 from sklearn.metrics import roc_auc_score
 
 train_dataset = torch.load("datasets/train_data.pt")
@@ -81,11 +81,11 @@ class GCN(torch.nn.Module):
 
 
 def train(model, device, loader, optimizer, criterion):
-    #model = model.to(device)
+    model = model.to(device)
     model.train()
 
     for step, batch in enumerate(loader):
-        #batch = batch.to(device)
+        batch = batch.to(device)
         pred = model(batch)
         y = batch.y.view(pred.shape).to(torch.float64)
 
@@ -99,14 +99,14 @@ def train(model, device, loader, optimizer, criterion):
 
 
 def eval(model, device, loader, criterion):
-    #model = model.to(device)
+    model = model.to(device)
     model.eval()
     y_true = []
     y_pred = []
     # For every batch in test loader
     for batch in loader:
 
-        #batch = batch.to(device)
+        batch = batch.to(device)
         if batch.x.shape[0] == 1:
             pass
         else:
@@ -136,8 +136,8 @@ def eval(model, device, loader, criterion):
 def run_training(model) -> None:
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.BCEWithLogitsLoss(reduction = "none")
-    #device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    device = torch.device('mps')
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    #device = torch.device('mps')
     #print("Start training...")
     results = []
     for epoch in range(1, 5):
@@ -153,22 +153,22 @@ def run_training(model) -> None:
 
     return results
 
-def run_evolutionary_process(pop_size = 10, iterations = 10, prob_mutations = 0.4, folder = 'results') -> None:
+def run_evolutionary_process(pop_size = 10, iterations = 10, prob_mutations = 0.4) -> None:
     #model = GCN(32, 9, 12)
     #graph_genotype.GraphGenotype.random_gnn()
+    os.mkdir(root_path:=f'results{str(time.time()).split(".")[0]}')
     all_results = []
     population = [graph_genotype.GraphGenotype.random_gnn() for _ in range(pop_size)]
-    for _ in range(10):
+    for _ in range(iterations):
         print('iteration', _)
         n_p = []
         error_count, pop_count = 0, 0
         for gg in population:
-            old_gg = copy.deepcopy(gg)
             model = GCN(gg, 32, 9, 12)
             pop_count += 1
             try:
                 training_results = run_training(model)
-                n_p.append([max(training_results, key=lambda x:x['Validation']['rocauc'])['Validation']['rocauc'], old_gg])
+                n_p.append([max(training_results, key=lambda x:x['Validation']['rocauc'])['Validation']['rocauc'], gg])
             except:
                 print(traceback.format_exc())
                 error_count += 1
@@ -188,12 +188,12 @@ def run_evolutionary_process(pop_size = 10, iterations = 10, prob_mutations = 0.
         for g in random.choices(a_gg, weights = [i/s_scores for i in scores], k = pop_size):
             g.mutate()
 
-            population.append(g)
+            population.append(copy.deepcopy(g))
             
 
     print('final result!')
     print(max(all_results, key=lambda x:x[0]))
-    with open(os.path.join(folder, 'results.json'), 'a') as f:
+    with open(os.path.join(root_path, 'results.json'), 'a') as f:
         json.dump(all_results, f)
 
 if __name__ == '__main__':
@@ -205,4 +205,4 @@ if __name__ == '__main__':
     #print(model)
     '''
     #https://packaging.python.org/en/latest/tutorials/packaging-projects/
-    run_evolutionary_process(iterations = 1, folder = 'results2')
+    run_evolutionary_process(iterations = 1)
