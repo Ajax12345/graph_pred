@@ -163,11 +163,12 @@ def run_evolutionary_process(pop_size = 10, iterations = 10, prob_mutations = 0.
         n_p = []
         error_count, pop_count = 0, 0
         for gg in population:
+            old_gg = copy.deepcopy(gg)
             model = GCN(gg, 32, 9, 12)
             pop_count += 1
             try:
                 training_results = run_training(model)
-                n_p.append([max(training_results, key=lambda x:x['Validation']['rocauc'])['Validation']['rocauc'], gg])
+                n_p.append([max(training_results, key=lambda x:x['Validation']['rocauc'])['Validation']['rocauc'], old_gg])
             except:
                 print(traceback.format_exc())
                 error_count += 1
@@ -185,10 +186,9 @@ def run_evolutionary_process(pop_size = 10, iterations = 10, prob_mutations = 0.
         s_scores = sum(scores)
         population = []
         for g in random.choices(a_gg, weights = [i/s_scores for i in scores], k = pop_size):
-            if random.random() <= prob_mutations:
-                g.mutate()
+            g.mutate()
 
-            population.append(copy.deepcopy(g))
+            population.append(g)
             
 
     print('final result!')
@@ -204,4 +204,4 @@ if __name__ == '__main__':
     run_training(model)
     #print(model)
     '''
-    run_evolutionary_process()
+    run_evolutionary_process(folder = 'results2')

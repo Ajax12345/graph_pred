@@ -57,10 +57,10 @@ class PropCounter:
 p = PropCounter()
 
 G_LAYERS = {'convolutions':[
-        (g_c.GCNConv, p(1)),
+        (g_c.GCNConv, p(6)),
         (g_c.ChebConv, p(1)),
-        (g_c.SAGEConv, p(5)),
-        (g_c.GraphConv, p(5)),
+        (g_c.SAGEConv, p(6)),
+        (g_c.GraphConv, p(6)),
         (g_c.GatedGraphConv, p(5)),
         (g_c.GATConv, p(1)),
         #(g_c.CuGraphGATConv, p(1)), unable to install module
@@ -73,7 +73,7 @@ G_LAYERS = {'convolutions':[
         (g_c.MFConv, p(1)),
     ],
     'normalizations':[
-        (g_n.BatchNorm, p(1)),
+        (g_n.BatchNorm, p(4)),
         (g_n.InstanceNorm, p(1)),
         (g_n.LayerNorm, p(1)),
         (g_n.GraphNorm, p(1)),
@@ -84,8 +84,8 @@ G_LAYERS = {'convolutions':[
     ],
     'pooling':[
         (g_p.global_add_pool, p(1)),
-        (g_p.global_mean_pool, p(1)),
-        (g_p.global_max_pool, p(1)),
+        (g_p.global_mean_pool, p(4)),
+        (g_p.global_max_pool, p(3)),
     ],
     'transforms':[
         (g_a.Linear, p(1)),
@@ -323,12 +323,10 @@ class GraphGenotype:
 
 
     def mutate(self) -> None:
-        options = ['add_layer', 'remove_layer', 'swap_layers', 'update_layers']
-        random.shuffle(options)
-        for option in options:
-            if getattr(self, option)():
-                #print('performed', option)
-                return
+        options = [('add_layer', 0.7), ('remove_layer', 0.05), ('swap_layers', 0.05), ('update_layers', 0.2)]
+        methods, probs = zip(*options)
+        getattr(self, random.choices(methods, weights = probs, k=1)[0])()
+               
 
     @classmethod
     def all_modules(cls, obj) -> typing.Iterator:
