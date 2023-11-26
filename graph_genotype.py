@@ -325,6 +325,7 @@ class GraphGenotype:
     def mutate(self) -> None:
         #options = [('add_layer', 0.7), ('remove_layer', 0.05), ('swap_layers', 0.05), ('update_layers', 0.2)]
         options = [('add_layer', 0.7), ('remove_layer', 0.1), ('swap_layers', 0.15), ('update_layers', 0.05)]
+        #options = [('add_layer', 0.7), ('remove_layer', 0.1), ('swap_layers', 0.2)]
         methods, probs = zip(*options)
         getattr(self, random.choices(methods, weights = probs, k=1)[0])()
                
