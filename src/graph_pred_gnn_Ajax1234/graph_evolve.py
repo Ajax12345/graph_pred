@@ -204,4 +204,5 @@ if __name__ == '__main__':
     run_training(model)
     #print(model)
     '''
+    #https://packaging.python.org/en/latest/tutorials/packaging-projects/
     run_evolutionary_process(folder = 'results2')
