@@ -126,8 +126,8 @@ def eval(model, device, loader, criterion):
 
     return {'rocauc': sum(rocauc_list)/len(rocauc_list)}
 
-def run_training(train_loader, val_loader, model, train_evolutions) -> None:
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+def run_training(train_loader, val_loader, model, lr, train_evolutions) -> None:
+    optimizer = optim.Adam(model.parameters(), lr=lr)
     criterion = nn.BCEWithLogitsLoss(reduction = "none")
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     #device = torch.device('mps')
@@ -163,7 +163,7 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
             model = GCN(gg, 32, 9, 12)
             pop_count += 1
             try:
-                training_results = run_training(train_loader, val_loader, model, train_evolutions)
+                training_results = run_training(train_loader, val_loader, model, gg.lr, train_evolutions)
                 n_p.append([max(training_results, key=lambda x:x['Validation']['rocauc'])['Validation']['rocauc'], gg])
             except:
                 #print(traceback.format_exc())
@@ -178,10 +178,22 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
         score, m_gg = max(n_p, key=lambda x:x[0])
         model = GCN(m_gg, 32, 9, 12)
         try:
-            training_results = run_training(train_loader, val_loader, model, 4)
+            training_results = run_training(train_loader, val_loader, model, m_gg.lr, 4)
             score = max(training_results, key=lambda x:x['Validation']['rocauc'])['Validation']['rocauc']
             print('best score', score)
         except:
+            print(traceback.format_exc())
+            if best_results:
+                population = []
+                for _ in range(pop_size):
+                    gg = random.choice(best_results)
+                    gg.purge()
+                    population.append(copy.deepcopy(gg))
+
+            else:
+                population = [graph_genotype.GraphGenotype.random_gnn() for _ in range(pop_size)]
+            
+            continue
             print('best score (one epoch)', score)
 
         all_results.append([score, m_gg.to_dict()])
@@ -231,5 +243,5 @@ if __name__ == '__main__':
     val_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     #https://packaging.python.org/en/latest/tutorials/packaging-projects/
-    run_evolutionary_process(train_loader, val_loader, pop_size = 20, iterations = 10, train_evolutions = 2) 
+    run_evolutionary_process(train_loader, val_loader, pop_size = 30, iterations = 20, train_evolutions = 2) 
     

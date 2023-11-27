@@ -46,7 +46,13 @@ class ChebConv(Convolution):
         self.K = random.randint(2, 20)
         
     def update_random_params(self) -> None:
-        self.K = random.randint(2, 20)
+        if self.K < 3:
+            self.K += random.randint(1, 3)
+        
+        else:
+            self.K += random.choice([-1, 1])*random.randint(1, 3)
+        
+        #self.K = random.randint(2, 20)
         return True
 
     def init(self) -> 'ChebConv':
@@ -193,7 +199,13 @@ class TAGConv(Convolution):
         self.K = random.randint(2, 7)
         
     def update_random_params(self) -> None:
-        self.K = random.randint(2, 7)
+        if self.K < 3:
+            self.K += random.randint(1, 3)
+        
+        else:
+            self.K += random.choice([-1, 1])*random.randint(1, 3)
+
+        #self.K = random.randint(2, 7)
         return True
 
     def init(self) -> 'TAGConv':
@@ -223,12 +235,28 @@ class ARMAConv(Convolution):
         self.torch_obj_instance = None
         self.num_stacks = random.randint(2, 5)
         self.num_layers = random.randint(2, 5)
-        self.dropout = random.randint(0, 5)/10
+        self.dropout = random.randint(5, 50)/100
         
     def update_random_params(self) -> None:
-        self.num_stacks = random.randint(2, 5)
-        self.num_layers = random.randint(2, 5)
-        self.dropout = random.randint(0, 5)/10
+        if self.num_stacks < 3:
+            self.num_stacks += random.randint(1, 2)
+        else:
+            self.num_stacks += random.choice([-1, 1])*random.randint(1, 2)
+        
+        if self.num_layers < 3:
+            self.num_layers += random.randint(1, 2)
+        else:
+            self.num_layers += random.choice([-1, 1])*random.randint(1, 2)
+        
+        if self.dropout < 0.1:
+            self.dropout += random.randint(5, 50)/100
+
+        else:
+            self.dropout += random.choice([-1, 1])*random.randint(5, int(self.dropout*100))/100
+        
+        #self.num_stacks = random.randint(2, 5)
+        #self.num_layers = random.randint(2, 5)
+        #self.dropout = random.randint(0, 5)/10
         return True
 
     def init(self) -> 'ARMAConv':
@@ -264,7 +292,12 @@ class SGConv(Convolution):
         self.K = random.randint(1, 5)
         
     def update_random_params(self) -> None:
-        self.K = random.randint(1, 5)
+        if self.K < 3:
+            self.K += random.randint(1, 3)
+        
+        else:
+            self.K += random.choice([-1, 1])*random.randint(1, 3)
+        #self.K = random.randint(1, 5)
         return True
         
     def init(self) -> 'ARMAConv':
@@ -295,12 +328,32 @@ class APPNP(Convolution):
         self.torch_obj_instance = None
         self.K = random.randint(1, 5)
         self.alpha = random.randint(1,100)/100
-        self.dropout = random.randint(0, 5)/10
+        self.dropout = random.randint(5, 50)/100
 
     def update_random_params(self) -> None:
-        self.K = random.randint(1, 5)
+        if self.K < 3:
+            self.K += random.randint(1, 3)
+        
+        else:
+            self.K += random.choice([-1, 1])*random.randint(1, 3)
+
+
+        if self.alpha < 0.1:
+            self.alpha += random.randint(5, 50)/100
+
+        else:
+            self.alpha += random.choice([-1, 1])*random.randint(5, int(self.alpha*100))/100
+        
+
+        if self.dropout < 0.1:
+            self.dropout += random.randint(5, 50)/100
+
+        else:
+            self.dropout += random.choice([-1, 1])*random.randint(5, int(self.dropout*100))/100
+        
+        #self.K = random.randint(1, 5)
         self.alpha = random.randint(1,100)/100
-        self.dropout = random.randint(0, 5)/10
+        #self.dropout = random.randint(0, 5)/10
         return True
 
     def init(self) -> 'APPNP':

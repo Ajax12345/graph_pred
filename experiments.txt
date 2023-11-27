@@ -42,5 +42,11 @@ Experiment 3:
 
         - re-introduce update with a very small probability
 
+    Future work:
+        - Get rid of swap, replace with something else. Randomly change learning rate?
+        - Set all mutations to be equal prob, updating should increment or decrement params by a certain amount
+        - add pooling at the end of every convo layer? 
+
+        
     Observations:
         - Updating does not improve accuracy

@@ -91,7 +91,7 @@ G_LAYERS = {'convolutions':[
         (g_a.Linear, p(1)),
     ],
     'activations':[
-        (g_ac.relu, p(10)),
+        (g_ac.relu, p(4)),
         (g_ac.hardswish, p(1)),
         (g_ac.elu, p(1)),
         (g_ac.selu, p(1)),
@@ -276,10 +276,18 @@ class GraphGenotype:
         self.readout_layer = None
         self.final_dropout = None
         self.transformation = None
+        self.lr = 0.001
 
     def add_layer(self) -> bool:
         assert self.convolution_layers is not None
         self.convolution_layers.append(ConvolutionLayer.random_layer(self))
+        return True
+
+    def update_lr(self) -> bool:
+        while (lr:=self.lr + random.choice([-1, 1])*random.randint(10, 500)/10000) <= 0:
+            pass
+        
+        self.lr = lr
         return True
 
     def remove_layer(self) -> bool:
@@ -324,8 +332,9 @@ class GraphGenotype:
 
     def mutate(self) -> None:
         #options = [('add_layer', 0.7), ('remove_layer', 0.05), ('swap_layers', 0.05), ('update_layers', 0.2)]
-        options = [('add_layer', 0.7), ('remove_layer', 0.1), ('swap_layers', 0.15), ('update_layers', 0.05)]
+        #options = [('add_layer', 0.7), ('remove_layer', 0.1), ('swap_layers', 0.15), ('update_layers', 0.05)]
         #options = [('add_layer', 0.7), ('remove_layer', 0.1), ('swap_layers', 0.2)]
+        options = [('add_layer', 0.25), ('remove_layer', 0.25), ('update_layers', 0.25), ('update_lr', 0.25)]
         methods, probs = zip(*options)
         getattr(self, random.choices(methods, weights = probs, k=1)[0])()
                
@@ -387,7 +396,8 @@ class GraphGenotype:
             'layers':[i.to_dict() for i in self.convolution_layers],
             'readout_layer':self.readout_layer.to_dict(),
             'final_dropout':self.final_dropout.to_dict(),
-            'transformation':self.transformation.to_dict()
+            'transformation':self.transformation.to_dict(),
+            'lr':self.lr
         }
 
     def __repr__(self) -> str:
