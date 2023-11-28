@@ -362,7 +362,7 @@ class GraphGenotype:
         #options = [('add_layer', 0.7), ('remove_layer', 0.05), ('swap_layers', 0.05), ('update_layers', 0.2)]
         #options = [('add_layer', 0.7), ('remove_layer', 0.1), ('swap_layers', 0.15), ('update_layers', 0.05)]
         #options = [('add_layer', 0.7), ('remove_layer', 0.1), ('swap_layers', 0.2)]
-        options = [('add_layer', 0.25), ('remove_layer', 0.25), ('update_layers', 0.25), ('update_lr', 0.25)]
+        options = [('add_layer', 0.40), ('remove_layer', 0.10), ('update_layers', 0.30), ('update_lr', 0.20)]
         methods, probs = zip(*options)
         getattr(self, random.choices(methods, weights = probs, k=1)[0])()
                

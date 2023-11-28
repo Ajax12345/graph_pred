@@ -264,5 +264,5 @@ if __name__ == '__main__':
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     #https://packaging.python.org/en/latest/tutorials/packaging-projects/
     best_graph = genotype_retrieve.best_graph()
-    run_evolutionary_process(train_loader, val_loader, pop_size = 30, iterations = 20, train_evolutions = 2, parent_GG = best_graph) 
+    run_evolutionary_process(train_loader, val_loader, pop_size = 20, iterations = 20, train_evolutions = 2, parent_GG = best_graph) 
     
