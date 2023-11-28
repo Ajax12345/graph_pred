@@ -154,7 +154,7 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
     with open(os.path.join(root_path, 'results.json'), 'a') as f:
         pass
 
-    all_results, best_results = [], []
+    all_results, best_results, best_score_results = [], [], []
     if parent_GG is None:
         population = [graph_genotype.GraphGenotype.random_gnn() for _ in range(pop_size)]
     
@@ -170,7 +170,7 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
         n_p = []
         error_count, pop_count = 0, 0
         for gg in population:
-            print(gg)
+            #print(gg)
             model = GCN(gg, 32, 9, 12)
             pop_count += 1
             try:
@@ -209,6 +209,7 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
 
         all_results.append([score, m_gg.to_dict()])
         best_results.append(m_gg)
+        best_score_results.append([score, m_gg])
         '''
         scores, a_gg = zip(*n_p)
         s_scores = sum(scores)
@@ -219,14 +220,15 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
             
             population.append(g)
         '''
+        #_, m_gg = max(best_score_results, key=lambda x:x[0])
         population = []
         m_gg.purge()
-        for _ in range(pop_size-5):
+        for _ in range(pop_size-8):
             p_gg = copy.deepcopy(m_gg)
             p_gg.mutate()
             population.append(p_gg)
         
-        for _ in range(5):
+        for _ in range(8):
             _, p_gg = random.choice(n_p)
             p_gg.purge()
             np_gg = copy.deepcopy(p_gg)
@@ -262,5 +264,5 @@ if __name__ == '__main__':
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     #https://packaging.python.org/en/latest/tutorials/packaging-projects/
     best_graph = genotype_retrieve.best_graph()
-    run_evolutionary_process(train_loader, val_loader, pop_size = 30, iterations = 20, train_evolutions = 3, parent_GG = best_graph) 
+    run_evolutionary_process(train_loader, val_loader, pop_size = 30, iterations = 20, train_evolutions = 2, parent_GG = best_graph) 
     
