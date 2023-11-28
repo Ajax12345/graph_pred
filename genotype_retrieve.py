@@ -10,7 +10,7 @@ def best_graph() -> 'Genotype':
                 results.extend(graph)
 
 
-    print(results)
+    #print(results)
     score, graph = max(results, key=lambda x:float(x[0]))
     print('best graph score', score)
     #print(json.dumps(graph, indent=4))

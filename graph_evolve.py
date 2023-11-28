@@ -220,7 +220,7 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
             
             population.append(g)
         '''
-        #_, m_gg = max(best_score_results, key=lambda x:x[0])
+        _, m_gg = max(best_score_results, key=lambda x:x[0])
         population = []
         m_gg.purge()
         for _ in range(pop_size-8):
