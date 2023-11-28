@@ -16,6 +16,10 @@ class Pooling:
             'name':self.__class__.__name__, 
             'params':{'in_channels':self.genotype.network_state['in_channels']}}
 
+    @classmethod
+    def from_dict(cls, GG, d:dict) -> 'Pooling':
+        return cls(GG)
+
     def __repr__(self) -> str:
         d = self.to_dict()
         return f'{d["type"]}({d["name"]}, {d["params"]})'

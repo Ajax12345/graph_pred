@@ -31,6 +31,10 @@ class Linear:
             'name':self.__class__.__name__, 
             'params':{'in_channels':self.genotype.network_state['in_channels'], 'out_channels':self.genotype.network_state['out_channels']}}
 
+    @classmethod
+    def from_dict(cls, GG, d:dict) -> 'Linear':
+        return cls(GG)
+
 
 class LinearFinal(Linear):
     def init(self) -> 'nn.Linear':
@@ -66,3 +70,9 @@ class dropout:
         return {'type':'dropout', 
             'name':self.__class__.__name__, 
             'params':{'p':self.p}}
+
+    @classmethod
+    def from_dict(cls, GG, d:dict) -> 'dropout':
+        gg = cls(GG)
+        gg.p = float(d['params']['p'])
+        return gg

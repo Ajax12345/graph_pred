@@ -16,6 +16,10 @@ class Normalization:
             'name':self.__class__.__name__, 
             'params':{'in_channels':self.genotype.network_state['in_channels']}}
 
+    @classmethod
+    def from_dict(cls, GG, d:dict) -> 'Normalization':
+        return cls(GG)
+
     def __repr__(self) -> str:
         d = self.to_dict()
         return f'{d["type"]}({d["name"]}, {d["params"]})'
@@ -92,6 +96,12 @@ class PairNorm(Normalization):
             'params':{'in_channels':self.genotype.network_state['in_channels'],
                 'scale':self.scale}}
 
+    @classmethod
+    def from_dict(cls, GG, d:dict) -> 'Normalization':
+        gg = cls(GG)
+        gg.scale = float(d['params']['scale'])
+        return gg
+
 
 class MeanSubtractionNorm(BatchNorm):
     def init(self) -> 'MeanSubtractionNorm':
@@ -130,3 +140,9 @@ class DiffGroupNorm(Normalization):
             'name':self.__class__.__name__, 
             'params':{'in_channels':self.genotype.network_state['in_channels'],
                 'groups':self.groups}}
+
+    @classmethod
+    def from_dict(cls, GG, d:dict) -> 'Normalization':
+        gg = cls(GG)
+        gg.groups = int(d['params']['groups'])
+        return gg

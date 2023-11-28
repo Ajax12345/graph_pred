@@ -1,10 +1,16 @@
 import typing, collections
-import torch, random
+import torch, random, re
 import torch_geometric
 import numpy as np, torch_geometric.nn as tg_nn
 
 def obj_to_dict(obj) -> dict:
     return {'name':obj.__class__.__name__, 'params':str(obj)}
+
+def to_str_params(s):
+        return re.sub('(?<=[a-zA-Z]\=)\w+', lambda x:f'"{x.group()}"', s)
+
+def eval_aggr(s):
+    return eval(re.sub('\w+Aggregation', lambda x:'tg_nn.aggr.'+x.group(), to_str_params(s)).replace('\n', ''))
 
 class Convolution:
     def __init__(self, genotype:'GraphGenotype') -> None:
@@ -24,6 +30,9 @@ class Convolution:
                 'params':{'in_channels':self.genotype.network_state['in_channels'], 
                         'out_channels':self.genotype.network_state['out_channels']}}
 
+    @classmethod
+    def from_dict(cls, GG, d:dict) -> 'Convolution':
+        return cls(GG)
 
 class GCNConv(Convolution):
     def init(self) -> 'GCNConv':
@@ -76,6 +85,12 @@ class ChebConv(Convolution):
                         'out_channels':self.genotype.network_state['out_channels'], 
                         'K':self.K}}
 
+    @classmethod
+    def from_dict(cls, GG, d:dict) -> 'Convolution':
+        gg = cls(GG)
+        gg.K = int(d['params']['K'])
+        return gg
+
 
 class SAGEConv(Convolution):
     def __init__(self, genotype:'GraphGenotype') -> None:
@@ -126,6 +141,13 @@ class SAGEConv(Convolution):
                         'out_channels':self.genotype.network_state['out_channels'], 
                         'aggr':obj_to_dict(self.aggr)}}
 
+    @classmethod
+    def from_dict(cls, GG, d:dict) -> 'Convolution':
+        gg = cls(GG)
+        gg.aggr = eval_aggr(d['params']['aggr']['params'])
+        return gg
+
+
 class GraphConv(SAGEConv):
     def init(self) -> 'GraphConv':
         self.torch_obj_instance = tg_nn.GraphConv(
@@ -156,6 +178,12 @@ class GatedGraphConv(SAGEConv):
                         'out_channels':self.genotype.network_state['out_channels'], 
                         'aggr':obj_to_dict(self.aggr), 'num_layers':self.num_layers}}
 
+    @classmethod
+    def from_dict(cls, GG, d:dict) -> 'Convolution':
+        gg = cls(GG)
+        gg.aggr = eval_aggr(d['params']['aggr']['params'])
+        gg.num_layers = int(d['params']['num_layers'])
+        return gg
 
 class GATConv(GCNConv):
     def init(self) -> 'GATConv':
@@ -229,6 +257,12 @@ class TAGConv(Convolution):
                         'out_channels':self.genotype.network_state['out_channels'], 
                         'K':self.K}}
 
+    @classmethod
+    def from_dict(cls, GG, d:dict) -> 'Convolution':
+        gg = cls(GG)
+        gg.K = int(d['params']['K'])
+        return gg
+
 class ARMAConv(Convolution):
     def __init__(self, genotype:'GraphGenotype') -> None:
         self.genotype = genotype
@@ -284,6 +318,13 @@ class ARMAConv(Convolution):
                         'num_layers':self.num_layers,
                         'dropout':self.dropout}}
 
+    @classmethod
+    def from_dict(cls, GG, d:dict) -> 'Convolution':
+        gg = cls(GG)
+        gg.num_stacks = int(d['params']['num_stacks'])
+        gg.num_layers = int(d['params']['num_layers'])
+        gg.dropout = float(d['params']['dropout'])
+        return gg
 
 class SGConv(Convolution):
     def __init__(self, genotype:'GraphGenotype') -> None:
@@ -321,6 +362,11 @@ class SGConv(Convolution):
                         'out_channels':self.genotype.network_state['out_channels'], 
                         'K':self.K}}
 
+    @classmethod
+    def from_dict(cls, GG, d:dict) -> 'Convolution':
+        gg = cls(GG)
+        gg.K = int(d['params']['K'])
+        return gg
 
 class APPNP(Convolution):
     def __init__(self, genotype:'GraphGenotype') -> None:
@@ -376,6 +422,13 @@ class APPNP(Convolution):
                         'out_channels':self.genotype.network_state['out_channels'], 
                         'K':self.K, 'alpha':self.alpha, 'dropout':self.dropout}}
     
+    @classmethod
+    def from_dict(cls, GG, d:dict) -> 'Convolution':
+        gg = cls(GG)
+        gg.K = int(d['params']['K'])
+        gg.alpha = float(d['params']['alpha'])
+        gg.dropout = float(d['params']['dropout'])
+        return gg
 
 class MFConv(GCNConv):
     def init(self) -> 'MFConv':
@@ -389,3 +442,24 @@ class MFConv(GCNConv):
         self.genotype.network_state['x'] = self.torch_obj_instance(
             self.genotype.network_state['x'], 
             self.genotype.network_state['edge_index'])
+
+if __name__ == '__main__':
+    s = """
+MultiAggregation([
+    MulAggregation(),
+    MaxAggregation(),
+    MeanAggregation(),
+    MinAggregation(),
+    StdAggregation(),
+    MaxAggregation(),
+    ], mode=cat)
+    """
+    def to_str_params(s):
+        return re.sub('(?<=[a-zA-Z]\=)\w+', lambda x:f'"{x.group()}"', s)
+
+    def eval_aggr(s):
+        return eval(re.sub('\w+Aggregation', lambda x:'tg_nn.aggr.'+x.group(), to_str_params(s)).replace('\n', ''))
+
+    print(eval_aggr(s).__class__)
+
+    

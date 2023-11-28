@@ -18,6 +18,10 @@ class Activation:
             'name':self.__class__.__name__, 
             'params':{}}
 
+    @classmethod
+    def from_dict(cls, GG, d:dict) -> 'Activation':
+        return cls(GG)
+
     def execute(self) -> None:
         self.genotype.network_state['x'] = self.torch_obj_instance(
             self.genotype.network_state['x'])

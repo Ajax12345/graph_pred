@@ -8,6 +8,7 @@ from torch_geometric.data import DataLoader
 import torch.nn as nn, json, random
 import torch.optim as optim, os, time
 from sklearn.metrics import roc_auc_score
+import genotype_retrieve, typing
 
 
 batch_size=32
@@ -146,7 +147,7 @@ def run_training(train_loader, val_loader, model, lr, train_evolutions) -> None:
 
     return results
 
-def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations = 10, train_evolutions = 4, prob_mutations = 0.4) -> None:
+def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations = 10, train_evolutions = 4, prob_mutations = 0.4, parent_GG:typing.Union[None, 'Genotype'] = None) -> None:
     #model = GCN(32, 9, 12)
     #graph_genotype.GraphGenotype.random_gnn()
     os.mkdir(root_path:=f'results{str(time.time()).split(".")[0]}')
@@ -154,12 +155,22 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
         pass
 
     all_results, best_results = [], []
-    population = [graph_genotype.GraphGenotype.random_gnn() for _ in range(pop_size)]
+    if parent_GG is None:
+        population = [graph_genotype.GraphGenotype.random_gnn() for _ in range(pop_size)]
+    
+    else:
+        population = [copy.deepcopy(parent_GG)]
+        for _ in range(pop_size - 1):
+            gg = copy.deepcopy(parent_GG)
+            gg.mutate()
+            population.append(gg)
+
     for _ in range(iterations):
         print('iteration', _ + 1)
         n_p = []
         error_count, pop_count = 0, 0
         for gg in population:
+            print(gg)
             model = GCN(gg, 32, 9, 12)
             pop_count += 1
             try:
@@ -182,7 +193,7 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
             score = max(training_results, key=lambda x:x['Validation']['rocauc'])['Validation']['rocauc']
             print('best score', score)
         except:
-            print(traceback.format_exc())
+            #print(traceback.format_exc())
             if best_results:
                 population = []
                 for _ in range(pop_size):
@@ -215,7 +226,14 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
             p_gg.mutate()
             population.append(p_gg)
         
-        population.extend([random.choice(n_p)[-1] for _ in range(5)])
+        for _ in range(5):
+            _, p_gg = random.choice(n_p)
+            p_gg.purge()
+            np_gg = copy.deepcopy(p_gg)
+            np_gg.mutate()
+            population.append(np_gg)
+        
+        #population.extend([random.choice(n_p)[-1] for _ in range(5)])
 
         with open(os.path.join(root_path, 'results.json'), 'w') as f:
             json.dump(all_results, f)
@@ -243,5 +261,6 @@ if __name__ == '__main__':
     val_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     #https://packaging.python.org/en/latest/tutorials/packaging-projects/
-    run_evolutionary_process(train_loader, val_loader, pop_size = 30, iterations = 20, train_evolutions = 2) 
+    best_graph = genotype_retrieve.best_graph()
+    run_evolutionary_process(train_loader, val_loader, pop_size = 30, iterations = 20, train_evolutions = 3, parent_GG = best_graph) 
     

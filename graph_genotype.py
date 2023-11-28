@@ -251,6 +251,34 @@ class ConvolutionLayer:
             dropout = dropout
         )
 
+    @classmethod
+    def from_dict(cls, GG, d:dict) -> 'ConvolutionLayer':
+        convolution = getattr(g_c, d['convolution']['name']).from_dict(GG, d['convolution'])
+        transform = None
+
+        if d['transform'] is not None:
+            transform = getattr(g_a, d['transform']['name']).from_dict(GG, d['transform'])
+
+        activate = getattr(g_ac, d['activate']['name']).from_dict(GG, d['activate'])
+        normalize = None
+
+        if d['normalize'] is not None:
+            normalize = getattr(g_n, d['normalize']['name']).from_dict(GG, d['normalize'])
+        
+        dropout = None
+
+        if d['dropout'] is not None:
+            dropout = getattr(g_a, d['dropout']['name']).from_dict(GG, d['dropout'])
+
+        return cls(
+            GG,
+            convolution,
+            transform = transform,
+            activate = activate,
+            normalize = normalize,
+            dropout = dropout
+        )
+
     def to_dict(self) -> dict:
         return {'type':self.__class__.__name__,
                 **{a:b if b is None else b.to_dict() for a, b in self.__dict__.items() if a != 'GG'}}
@@ -372,12 +400,23 @@ class GraphGenotype:
         self.transformation.init()
 
     @classmethod
-    def random_gnn(cls, layers = (2, 5)) -> 'GraphGenotype':
+    def random_gnn(cls, layers = (2, 5), lr = 0.001) -> 'GraphGenotype':
         GG = cls()
         GG.convolution_layers = [ConvolutionLayer.random_layer(GG) for _ in range(random.randint(*layers))]
         GG.readout_layer = G_L.r_pool(GG)
         GG.final_dropout = G_L.r_dropout(GG)
         GG.transformation = g_a.LinearFinal(GG)
+        GG.lr = lr
+        return GG
+
+    @classmethod
+    def from_dict(cls, d:dict) -> 'GraphGenotype':
+        GG = cls()
+        GG.convolution_layers = [ConvolutionLayer.from_dict(GG, i) for i in d['layers']]
+        GG.readout_layer = getattr(g_p, d['readout_layer']['name']).from_dict(GG, d['readout_layer'])
+        GG.final_dropout = getattr(g_a, d['final_dropout']['name']).from_dict(GG, d['final_dropout'])
+        GG.transformation = getattr(g_a, d['transformation']['name']).from_dict(GG, d['transformation'])
+        GG.lr = d['lr']
         return GG
 
     def purge(self) -> None:
@@ -401,7 +440,7 @@ class GraphGenotype:
         }
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}(layer_num = {len(self.layers)})'
+        return f'{self.__class__.__name__}(layer_num = {len(self.convolution_layers)})'
 
 
 if __name__ == '__main__':
