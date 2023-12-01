@@ -39,4 +39,4 @@ def plot_accuracies() -> None:
         
 
 if __name__ == '__main__':
-    best_graph()
+    plot_accuracies()

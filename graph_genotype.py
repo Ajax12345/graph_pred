@@ -57,11 +57,11 @@ class PropCounter:
 p = PropCounter()
 
 G_LAYERS = {'convolutions':[
-        (g_c.GCNConv, p(6)),
+        (g_c.GCNConv, p(1)),
         (g_c.ChebConv, p(1)),
-        (g_c.SAGEConv, p(6)),
-        (g_c.GraphConv, p(6)),
-        (g_c.GatedGraphConv, p(5)),
+        (g_c.SAGEConv, p(1)),
+        (g_c.GraphConv, p(1)),
+        (g_c.GatedGraphConv, p(1)),
         (g_c.GATConv, p(1)),
         #(g_c.CuGraphGATConv, p(1)), unable to install module
         (g_c.GATv2Conv, p(1)),
@@ -71,6 +71,13 @@ G_LAYERS = {'convolutions':[
         (g_c.SGConv, p(1)),
         (g_c.APPNP, p(1)),
         (g_c.MFConv, p(1)),
+        (g_c.FiLMConv, p(3)),
+        (g_c.PANConv, p(3)),
+        (g_c.GENConv, p(3)),
+        (g_c.ClusterGCNConv, p(3)),
+        (g_c.LEConv, p(3)),
+        (g_c.FeaStConv, p(3)),
+        (g_c.SuperGATConv, p(3))
     ],
     'normalizations':[
         (g_n.BatchNorm, p(4)),
@@ -305,6 +312,7 @@ class GraphGenotype:
         self.final_dropout = None
         self.transformation = None
         self.lr = 0.001
+        self.optim = None
 
     def add_layer(self) -> bool:
         assert self.convolution_layers is not None
@@ -316,6 +324,7 @@ class GraphGenotype:
             pass
         
         self.lr = lr
+        self.optim = random.choice([*{'Adam', 'SGD', 'Rprop', 'ASGD', 'Adadelta'} - {self.optim}])
         return True
 
     def remove_layer(self) -> bool:
@@ -362,7 +371,8 @@ class GraphGenotype:
         #options = [('add_layer', 0.7), ('remove_layer', 0.05), ('swap_layers', 0.05), ('update_layers', 0.2)]
         #options = [('add_layer', 0.7), ('remove_layer', 0.1), ('swap_layers', 0.15), ('update_layers', 0.05)]
         #options = [('add_layer', 0.7), ('remove_layer', 0.1), ('swap_layers', 0.2)]
-        options = [('add_layer', 0.40), ('remove_layer', 0.10), ('update_layers', 0.30), ('update_lr', 0.20)]
+        #options = [('add_layer', 0.40), ('remove_layer', 0.10), ('update_layers', 0.30), ('update_lr', 0.20)]
+        options = [('add_layer', 0.20), ('remove_layer', 0.10), ('update_layers', 0.50), ('update_lr', 0.20)]
         methods, probs = zip(*options)
         getattr(self, random.choices(methods, weights = probs, k=1)[0])()
                
@@ -407,6 +417,7 @@ class GraphGenotype:
         GG.final_dropout = G_L.r_dropout(GG)
         GG.transformation = g_a.LinearFinal(GG)
         GG.lr = lr
+        GG.optim = random.choice(['Adam', 'SGD', 'Rprop', 'ASGD', 'Adadelta'])
         return GG
 
     @classmethod
@@ -417,6 +428,7 @@ class GraphGenotype:
         GG.final_dropout = getattr(g_a, d['final_dropout']['name']).from_dict(GG, d['final_dropout'])
         GG.transformation = getattr(g_a, d['transformation']['name']).from_dict(GG, d['transformation'])
         GG.lr = d['lr']
+        GG.optim = d.get('optim', 'Adam')
         return GG
 
     def purge(self) -> None:
@@ -436,7 +448,8 @@ class GraphGenotype:
             'readout_layer':self.readout_layer.to_dict(),
             'final_dropout':self.final_dropout.to_dict(),
             'transformation':self.transformation.to_dict(),
-            'lr':self.lr
+            'lr':self.lr,
+            'optim':self.optim
         }
 
     def __repr__(self) -> str:

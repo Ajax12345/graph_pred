@@ -127,8 +127,8 @@ def eval(model, device, loader, criterion):
 
     return {'rocauc': sum(rocauc_list)/len(rocauc_list)}
 
-def run_training(train_loader, val_loader, model, lr, train_evolutions) -> None:
-    optimizer = optim.Adam(model.parameters(), lr=lr)
+def run_training(train_loader, val_loader, model, m_optim, lr, train_evolutions) -> None:
+    optimizer = getattr(optim, m_optim)(model.parameters(), lr=lr)
     criterion = nn.BCEWithLogitsLoss(reduction = "none")
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     #device = torch.device('mps')
@@ -174,7 +174,7 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
             model = GCN(gg, 32, 9, 12)
             pop_count += 1
             try:
-                training_results = run_training(train_loader, val_loader, model, gg.lr, train_evolutions)
+                training_results = run_training(train_loader, val_loader, model, gg.optim, gg.lr, train_evolutions)
                 n_p.append([max(training_results, key=lambda x:x['Validation']['rocauc'])['Validation']['rocauc'], gg])
             except:
                 #print(traceback.format_exc())
@@ -189,7 +189,7 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
         score, m_gg = max(n_p, key=lambda x:x[0])
         model = GCN(m_gg, 32, 9, 12)
         try:
-            training_results = run_training(train_loader, val_loader, model, m_gg.lr, 4)
+            training_results = run_training(train_loader, val_loader, model, m_gg.optim, m_gg.lr, 4)
             score = max(training_results, key=lambda x:x['Validation']['rocauc'])['Validation']['rocauc']
             print('best score', score)
         except:
@@ -207,6 +207,7 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
             continue
             print('best score (one epoch)', score)
 
+        m_gg.purge()
         all_results.append([score, m_gg.to_dict()])
         best_results.append(m_gg)
         best_score_results.append([score, m_gg])
@@ -231,7 +232,8 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
         for _ in range(8):
             _, p_gg = random.choice(n_p)
             p_gg.purge()
-            np_gg = copy.deepcopy(p_gg)
+            #np_gg = copy.deepcopy(p_gg)
+            np_gg = graph_genotype.GraphGenotype.from_dict(p_gg.to_dict())
             np_gg.mutate()
             population.append(np_gg)
         
@@ -264,5 +266,5 @@ if __name__ == '__main__':
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     #https://packaging.python.org/en/latest/tutorials/packaging-projects/
     best_graph = genotype_retrieve.best_graph()
-    run_evolutionary_process(train_loader, val_loader, pop_size = 20, iterations = 20, train_evolutions = 2, parent_GG = best_graph) 
+    run_evolutionary_process(train_loader, val_loader, pop_size = 20, iterations = 20, train_evolutions = 4, parent_GG = best_graph) 
     

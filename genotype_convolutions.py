@@ -463,3 +463,90 @@ MultiAggregation([
     print(eval_aggr(s).__class__)
 
     
+class FiLMConv(Convolution):
+    def init(self) -> 'FiLMConv':
+        self.torch_obj_instance = tg_nn.FiLMConv(
+                self.genotype.network_state['in_channels'], 
+                self.genotype.network_state['out_channels'])
+
+        return self
+
+    def execute(self) -> None:
+        self.genotype.network_state['x'] = self.torch_obj_instance(
+            self.genotype.network_state['x'], 
+            self.genotype.network_state['edge_index'])
+
+class PANConv(Convolution):
+    def __init__(self, genotype:'GraphGenotype') -> None:
+        self.genotype = genotype
+        self.torch_obj_instance = None
+        self.filter_size = random.randint(5, 10)
+
+    def init(self) -> 'PANConv':
+        self.torch_obj_instance = tg_nn.PANConv(
+                self.genotype.network_state['in_channels'], 
+                self.genotype.network_state['out_channels'],
+                self.filter_size)
+
+        return self
+
+    def execute(self) -> None:
+        self.genotype.network_state['x'] = self.torch_obj_instance(
+            self.genotype.network_state['x'], 
+            self.genotype.network_state['edge_index'])
+
+
+    def to_dict(self) -> dict:
+        return {'type':'convolution', 
+                'name':self.__class__.__name__, 
+                'params':{'in_channels':self.genotype.network_state['in_channels'], 
+                        'out_channels':self.genotype.network_state['out_channels'],
+                        'filter_size':self.filter_size}}
+
+    @classmethod
+    def from_dict(cls, GG, d:dict) -> 'Convolution':
+        gg = cls(GG)
+        gg.filter_size = int(d['params']['filter_size'])
+        return gg
+
+
+class GENConv(SAGEConv):
+    def init(self) -> 'SAGEConv':
+        self.torch_obj_instance = tg_nn.GENConv(
+                self.genotype.network_state['in_channels'], 
+                self.genotype.network_state['out_channels'],
+                aggr = self.aggr)
+
+        return self
+
+class ClusterGCNConv(GCNConv):
+    def init(self) -> 'ClusterGCNConv':
+        self.torch_obj_instance = tg_nn.ClusterGCNConv(
+                self.genotype.network_state['in_channels'], 
+                self.genotype.network_state['out_channels'])
+
+        return self
+
+class LEConv(GCNConv):
+    def init(self) -> 'LEConv':
+        self.torch_obj_instance = tg_nn.LEConv(
+                self.genotype.network_state['in_channels'], 
+                self.genotype.network_state['out_channels'])
+
+        return self
+
+class FeaStConv(GCNConv):
+    def init(self) -> 'FeaStConv':
+        self.torch_obj_instance = tg_nn.FeaStConv(
+                self.genotype.network_state['in_channels'], 
+                self.genotype.network_state['out_channels'])
+
+        return self
+
+class SuperGATConv(GCNConv):
+    def init(self) -> 'SuperGATConv':
+        self.torch_obj_instance = tg_nn.SuperGATConv(
+                self.genotype.network_state['in_channels'], 
+                self.genotype.network_state['out_channels'])
+
+        return self
