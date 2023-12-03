@@ -313,6 +313,7 @@ class GraphGenotype:
         self.transformation = None
         self.lr = 0.001
         self.optim = None
+        self.batch_size = 32
 
     def add_layer(self) -> bool:
         assert self.convolution_layers is not None
@@ -325,6 +326,15 @@ class GraphGenotype:
         
         self.lr = lr
         self.optim = random.choice([*{'Adam', 'SGD', 'Rprop', 'ASGD', 'Adadelta'} - {self.optim}])
+        if self.batch_size > 32:
+            if random.choice([1, -1]) == 1:
+                self.batch_size -= random.randint(1, self.batch_size - 32)
+            else:
+                self.batch_size += random.randint(1, 10)
+
+        else:
+            self.batch_size += random.randint(1, 10)
+        
         return True
 
     def remove_layer(self) -> bool:
@@ -429,6 +439,7 @@ class GraphGenotype:
         GG.transformation = getattr(g_a, d['transformation']['name']).from_dict(GG, d['transformation'])
         GG.lr = d['lr']
         GG.optim = d.get('optim', 'Adam')
+        GG.batch_size = d.get('batch_size', 32)
         return GG
 
     def purge(self) -> None:
@@ -449,7 +460,8 @@ class GraphGenotype:
             'final_dropout':self.final_dropout.to_dict(),
             'transformation':self.transformation.to_dict(),
             'lr':self.lr,
-            'optim':self.optim
+            'optim':self.optim,
+            'batch_size':self.batch_size
         }
 
     def __repr__(self) -> str:

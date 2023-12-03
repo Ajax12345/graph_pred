@@ -5,6 +5,7 @@ def best_graph() -> 'Genotype':
     results = []
     for i in os.listdir('generated_graphs'):
         if i.startswith('results'):
+            print(i)
             with open(os.path.join('generated_graphs', i, 'results.json')) as f:
                 graph = json.load(f)
                 results.extend(graph)

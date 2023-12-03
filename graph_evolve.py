@@ -260,11 +260,11 @@ if __name__ == '__main__':
     test_dataset = torch.load("/Users/jamespetullo/graph_pred_datasets/datasets/test_data.pt")
 
     
-    batch_size=32
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-    #https://packaging.python.org/en/latest/tutorials/packaging-projects/
+    #batch_size=32
     best_graph = genotype_retrieve.best_graph()
-    run_evolutionary_process(train_loader, val_loader, pop_size = 20, iterations = 20, train_evolutions = 4, parent_GG = best_graph) 
+    train_loader = DataLoader(train_dataset, batch_size=best_graph.batch_size, shuffle=True)
+    val_loader = DataLoader(valid_dataset, batch_size=best_graph.batch_size, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=best_graph.batch_size, shuffle=False)
+    #https://packaging.python.org/en/latest/tutorials/packaging-projects/
+    run_evolutionary_process(train_loader, val_loader, pop_size = 20, iterations = 20, train_evolutions = 2, parent_GG = best_graph) 
     
