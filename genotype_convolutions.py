@@ -443,26 +443,6 @@ class MFConv(GCNConv):
             self.genotype.network_state['x'], 
             self.genotype.network_state['edge_index'])
 
-if __name__ == '__main__':
-    s = """
-MultiAggregation([
-    MulAggregation(),
-    MaxAggregation(),
-    MeanAggregation(),
-    MinAggregation(),
-    StdAggregation(),
-    MaxAggregation(),
-    ], mode=cat)
-    """
-    def to_str_params(s):
-        return re.sub('(?<=[a-zA-Z]\=)\w+', lambda x:f'"{x.group()}"', s)
-
-    def eval_aggr(s):
-        return eval(re.sub('\w+Aggregation', lambda x:'tg_nn.aggr.'+x.group(), to_str_params(s)).replace('\n', ''))
-
-    print(eval_aggr(s).__class__)
-
-    
 class FiLMConv(Convolution):
     def init(self) -> 'FiLMConv':
         self.torch_obj_instance = tg_nn.FiLMConv(
@@ -550,3 +530,22 @@ class SuperGATConv(GCNConv):
                 self.genotype.network_state['out_channels'])
 
         return self
+
+if __name__ == '__main__':
+    s = """
+MultiAggregation([
+    MulAggregation(),
+    MaxAggregation(),
+    MeanAggregation(),
+    MinAggregation(),
+    StdAggregation(),
+    MaxAggregation(),
+    ], mode=cat)
+    """
+    def to_str_params(s):
+        return re.sub('(?<=[a-zA-Z]\=)\w+', lambda x:f'"{x.group()}"', s)
+
+    def eval_aggr(s):
+        return eval(re.sub('\w+Aggregation', lambda x:'tg_nn.aggr.'+x.group(), to_str_params(s)).replace('\n', ''))
+
+    print(eval_aggr(s).__class__)
