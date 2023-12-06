@@ -76,3 +76,31 @@ class GCN(torch.nn.Module):
         x = F.dropout(x, p=0.5, training=self.training)
         x = self.lin(x)
         return x
+
+
+class GCN1(torch.nn.Module):
+    def __init__(self, hidden_channels, num_node_features, num_classes):
+        super(GCN, self).__init__()
+        torch.manual_seed(42)
+        self.emb = AtomEncoder(hidden_channels=32)
+        self.conv1 = GCNConv(hidden_channels,hidden_channels)
+        self.conv2 = GCNConv(hidden_channels, hidden_channels)
+        self.conv3 = GCNConv(hidden_channels, hidden_channels)
+        self.lin = Linear(hidden_channels, num_classes)
+
+    def forward(self, batch):
+        x , edge_index, batch_size = batch.x, batch.edge_index, batch.batch
+        x = self.emb(x)
+        # 1. Obtain node embeddings
+        x = self.conv1(x, edge_index)
+        x = x.relu()
+        x = self.conv2(x, edge_index)
+        x = x.relu()
+        x = self.conv3(x, edge_index)
+
+        # 2. Readout layer
+        x = gap(x, batch_size)  # [batch_size, hidden_channels]
+        # 3. Apply a final classifier
+        x = F.dropout(x, p=0.5, training=self.training)
+        x = self.lin(x)
+        return x

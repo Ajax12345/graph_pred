@@ -1,0 +1,40 @@
+digraph G  {
+    fontname="Helvetica,Arial,sans-serif"
+    node [fontname="Helvetica,Arial,sans-serif"]
+    edge [fontname="Helvetica,Arial,sans-serif"]
+    concentrate=True;
+    rankdir=TB;
+    node [shape=record];
+    n0 [label="AtomEncoder\n|{hidden_channels}|{{32}}"];
+n1 [label="GCNConv\n|{args}|{{(hidden_channels, hidden_channels)}}"];
+n2 [label="silu\n|{args}|{{(x)}}"];
+n3 [label="BatchNorm\n|{args}|{{(hidden_channels)}}"];
+n4 [label="GCNConv\n|{args}|{{(hidden_channels, hidden_channels)}}"];
+n5 [label="mish\n|{args}|{{(x)}}"];
+n6 [label="GraphNorm\n|{args}|{{(hidden_channels)}}"];
+n7 [label="GCNConv\n|{args}|{{(hidden_channels, hidden_channels)}}"];
+n8 [label="relu\n|{args}|{{(x)}}"];
+n9 [label="LayerNorm\n|{args}|{{(hidden_channels)}}"];
+n10 [label="TransformerConv\n|{args}|{{(hidden_channels, hidden_channels)}}"];
+n11 [label="relu\n|{args}|{{(x)}}"];
+n12 [label="dropout\n|{args|p|training}|{{(x)}|{0.5}|{self.training}}"];
+n13 [label="gap\n|{args}|{{(x, batch_size)}}"];
+n14 [label="dropout\n|{args|p|training}|{{(x)}|{0.5}|{self.training}}"];
+n15 [label="Linear\n|{args}|{{(hidden_channels, num_classes)}}"];
+    n0 -> n1;
+n1 -> n2;
+n2 -> n3;
+n3 -> n4;
+n4 -> n5;
+n5 -> n6;
+n6 -> n7;
+n7 -> n8;
+n8 -> n9;
+n9 -> n10;
+n10 -> n11;
+n11 -> n12;
+n12 -> n13;
+n13 -> n14;
+n14 -> n15;
+}
+    
