@@ -8,7 +8,7 @@ from torch_geometric.data import DataLoader
 import torch.nn as nn, json, random
 import torch.optim as optim, os, time
 from sklearn.metrics import roc_auc_score
-import genotype_retrieve, typing
+import genotype_retrieve, typing, csv
 
 
 batch_size=32
@@ -127,7 +127,7 @@ def eval(model, device, loader, criterion):
 
     return {'rocauc': sum(rocauc_list)/len(rocauc_list)}
 
-def run_training(train_loader, val_loader, model, m_optim, lr, train_evolutions) -> None:
+def run_training(train_loader, val_loader, model, m_optim, lr, train_evolutions) -> typing.Tuple['model', typing.List[dict]]:
     optimizer = getattr(optim, m_optim)(model.parameters(), lr=lr)
     criterion = nn.BCEWithLogitsLoss(reduction = "none")
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -145,7 +145,32 @@ def run_training(train_loader, val_loader, model, m_optim, lr, train_evolutions)
         val_acc = eval(model, device, val_loader, criterion)
         results.append({'Train': train_acc, 'Validation': val_acc})
 
-    return results
+    return model, results
+
+
+def run_eval_test(loader, model):
+    #model = model.to(device)
+    model.eval()
+    y_true = []
+    y_pred = []
+    # For every batch in test loader
+    for batch in loader:
+
+        #batch = batch.to(device)
+        if batch.x.shape[0] == 1:
+            pass
+        else:
+            with torch.no_grad():
+                pred = model(batch)
+
+            #y_true.append(batch.y.view(pred.shape))
+            y_pred.append(pred)
+
+    #y_true = torch.cat(y_true, dim = 0).cpu().numpy()
+    y_pred = torch.cat(y_pred, dim = 0).numpy()
+    #print('y_true', y_true)
+    print('y_pred', y_pred)
+    return y_pred
 
 def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations = 10, train_evolutions = 4, prob_mutations = 0.4, parent_GG:typing.Union[None, 'Genotype'] = None) -> None:
     #model = GCN(32, 9, 12)
@@ -174,7 +199,7 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
             model = GCN(gg, 32, 9, 12)
             pop_count += 1
             try:
-                training_results = run_training(train_loader, val_loader, model, gg.optim, gg.lr, train_evolutions)
+                _, training_results = run_training(train_loader, val_loader, model, gg.optim, gg.lr, train_evolutions)
                 n_p.append([max(training_results, key=lambda x:x['Validation']['rocauc'])['Validation']['rocauc'], gg])
             except:
                 #print(traceback.format_exc())
@@ -189,7 +214,7 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
         score, m_gg = max(n_p, key=lambda x:x[0])
         model = GCN(m_gg, 32, 9, 12)
         try:
-            training_results = run_training(train_loader, val_loader, model, m_gg.optim, m_gg.lr, 4)
+            _, training_results = run_training(train_loader, val_loader, model, m_gg.optim, m_gg.lr, 4)
             score = max(training_results, key=lambda x:x['Validation']['rocauc'])['Validation']['rocauc']
             print('best score', score)
         except:
@@ -266,5 +291,14 @@ if __name__ == '__main__':
     val_loader = DataLoader(valid_dataset, batch_size=best_graph.batch_size, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=best_graph.batch_size, shuffle=False)
     #https://packaging.python.org/en/latest/tutorials/packaging-projects/
-    run_evolutionary_process(train_loader, val_loader, pop_size = 20, iterations = 20, train_evolutions = 2, parent_GG = best_graph) 
+    #run_evolutionary_process(train_loader, val_loader, pop_size = 20, iterations = 20, train_evolutions = 2, parent_GG = best_graph) 
+    gg = best_graph
+    model = GCN(gg, 32, 9, 12)
+    model, results = run_training(train_loader, val_loader, model, gg.optim, gg.lr, 5)
+    predictions = run_eval_test(test_loader, model)
+    #write to the CSV
+    with open('test_output.csv', 'a') as f:
+        write = csv.writer(f)
+        write.writerows([[*i] for i in predictions])
+
     
