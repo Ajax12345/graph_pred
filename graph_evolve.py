@@ -175,34 +175,42 @@ def run_eval_test(loader, model):
 def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations = 10, train_evolutions = 4, prob_mutations = 0.4, parent_GG:typing.Union[None, 'Genotype'] = None) -> None:
     #model = GCN(32, 9, 12)
     #graph_genotype.GraphGenotype.random_gnn()
+
+    #set up data storage
     os.mkdir(root_path:=f'results{str(time.time()).split(".")[0]}')
     with open(os.path.join(root_path, 'results.json'), 'a') as f:
         pass
 
     all_results, best_results, best_score_results = [], [], []
     if parent_GG is None:
+        # if we do not already have a best-performing GNN, start with a completely random population
+        # initialize a population of random genotypes
         population = [graph_genotype.GraphGenotype.random_gnn() for _ in range(pop_size)]
     
     else:
+        # if we have a high performing GNN, create a population that consists of its mutations
         population = [copy.deepcopy(parent_GG)]
         for _ in range(pop_size - 1):
             gg = copy.deepcopy(parent_GG)
             gg.mutate()
             population.append(gg)
 
+
+    # performing genetic process over a given number of generations
     for _ in range(iterations):
         print('iteration', _ + 1)
         n_p = []
         error_count, pop_count = 0, 0
         for gg in population:
-            #print(gg)
+            # for each candiate GNN in the population, create a PyTorch object for it
             model = GCN(gg, 32, 9, 12)
             pop_count += 1
             try:
+                #run training of candidate model over a few epochs
                 _, training_results = run_training(train_loader, val_loader, model, gg.optim, gg.lr, train_evolutions)
+                #save best accuracy
                 n_p.append([max(training_results, key=lambda x:x['Validation']['rocauc'])['Validation']['rocauc'], gg])
             except:
-                #print(traceback.format_exc())
                 error_count += 1
 
             print('error percentage', error_count/pop_count)
@@ -211,9 +219,11 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
             population = [random.choice(best_results) for _ in range(pop_size)]
             continue
 
+        # get the best model discovered so far...
         score, m_gg = max(n_p, key=lambda x:x[0])
         model = GCN(m_gg, 32, 9, 12)
         try:
+            #... and train it over a larger number of epochs
             _, training_results = run_training(train_loader, val_loader, model, m_gg.optim, m_gg.lr, 4)
             score = max(training_results, key=lambda x:x['Validation']['rocauc'])['Validation']['rocauc']
             print('best score', score)
@@ -232,6 +242,7 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
             continue
             print('best score (one epoch)', score)
 
+        #copy the best model into the population
         m_gg.purge()
         all_results.append([score, m_gg.to_dict()])
         best_results.append(m_gg)
@@ -248,21 +259,29 @@ def run_evolutionary_process(train_loader, val_loader, pop_size = 10, iterations
         '''
         _, m_gg = max(best_score_results, key=lambda x:x[0])
         population = []
+
+        # clear out Torch state of best performing model
         m_gg.purge()
+
+        # over a range of pop_size - 8, take the highest performing GNN...
         for _ in range(pop_size-8):
             p_gg = copy.deepcopy(m_gg)
+            # ... mutate it...
             p_gg.mutate()
+            #... and append it to the population
             population.append(p_gg)
         
+        # to maintain genetic diversity ...
         for _ in range(8):
+            # ... choice a random GNN, which is not necessarily very high performing
             _, p_gg = random.choice(n_p)
             p_gg.purge()
-            #np_gg = copy.deepcopy(p_gg)
             np_gg = graph_genotype.GraphGenotype.from_dict(p_gg.to_dict())
+            # ... mutate it ...
             np_gg.mutate()
+            #... and append it to the population
             population.append(np_gg)
         
-        #population.extend([random.choice(n_p)[-1] for _ in range(5)])
 
         with open(os.path.join(root_path, 'results.json'), 'w') as f:
             json.dump(all_results, f)
